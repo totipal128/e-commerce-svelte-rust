@@ -1,0 +1,14 @@
+[
+  {
+    "code": "abc-123",
+    "name": "handphone",
+    "unit": "pcs",
+    "price": 1000000
+  },
+  {
+    "code": "abc-1234",
+    "name": "handphone 2",
+    "unit": "pcs",
+    "price": 1200000
+  }
+]
