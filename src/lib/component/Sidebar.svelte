@@ -24,6 +24,10 @@
                 icon: '<img src="/icon/scanner-touchscreen.svg" class="h-10 w-10 p-1 justify-center" alt="Tauri Logo"/>',
                 link: '/sale'
             }, {
+                name: 'Barang',
+                icon: '<img src="/icon/list-items.png" class="h-10 w-10 p-1 justify-center" alt="Tauri Logo"/>',
+                link: '/items'
+            }, {
                 name: 'Pengaturan',
                 icon: '<img src="/icon/gears.svg" class="h-10 w-10 p-1 justify-center" alt="Tauri Logo"/>',
                 link: '/settings'
@@ -32,31 +36,13 @@
     } = $props()
 
 </script>
-<aside class="bg-white w-65 m-2 rounded-2xl p-5 inset-shadow-sm h-[89vh]">
-    {#each data as menu}
-        <a href="{menu['link']}" class="flex hover:bg-gray-200 rounded-xl p-1 m-1"
-           class:bg-gray-200={menu['link'] === $page.url.pathname}>
-            {@html menu['icon']}
-            <p class="pt-2 pl-3"> {menu['name']} </p>
-        </a>
-    {/each}
-
-    <!--    <button onclick="{toggleDropDownSetting}" class="flex hover:bg-blue-700 rounded-xl p-1 m-1">-->
-    <!--        <img src="/icon/gears.svg" class="h-10 w-10 p-1 justify-center" alt="Tauri Logo"/>-->
-    <!--        <p class="pt-2 pl-3"> Setting </p>-->
-
-    <!--        <img src="/icon/chevron-double-down.svg"-->
-    <!--             class="h-7 w-7 ml-2 pt-3 justify-center transition duration-300"-->
-    <!--             alt="Tauri Logo"-->
-    <!--             class:rotate-180={hiddenDropDownSetting} class:mt-3={hiddenDropDownSetting}/>-->
-    <!--&lt;!&ndash;    </button>&ndash;&gt;-->
-    <!--    &lt;!&ndash;    <div class="duration-300 ease-in" class:hidden="{hiddenDropDownSetting}">&ndash;&gt;-->
-    <!--        <hr/>-->
-    <!--        <a href="/settings/users" class="flex hover:bg-blue-700 rounded-xl pl-2.5 p-1 m-1">-->
-    <!--            <img src="/icon/users-gear.svg" class="h-10 w-10 p-1 justify-center" alt="Tauri Logo"/>-->
-    <!--            <p class="pt-2 pl-3"> users </p>-->
-    <!--        </a>-->
-
-    <!--    </div>-->
+<aside class="bg-white w-65 m-2 rounded-sm p-5 inset-shadow-sm h-[90vh] overflow-y-auto">
+	{#each data as menu}
+		<a href="{menu['link']}" class="flex hover:bg-gray-200 rounded-xl p-1 mb-4"
+		   class:bg-gray-200={menu['link'] === $page.url.pathname}>
+			{@html menu['icon']}
+			<p class=""> {menu['name']} </p>
+		</a>
+	{/each}
 
 </aside>

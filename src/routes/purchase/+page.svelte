@@ -1,12 +1,27 @@
 <script>
+    import Purchase from "./Purchase.svelte"
     import Table from "$lib/component/table/Table.svelte";
+
+    let open = $state(false)
+
 </script>
 
-<div class="w-full mr-5">
+<div class="w-[84.5vw]">
+
+    <div class="p-3">
+        <button type="button"
+                onclick="{() => open = true}"
+                class="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-base text-sm px-4 py-2.5 text-center leading-5">
+            Tambah Data
+        </button>
+    </div>
+
+    <Purchase {open} on:close={() => open = false}/>
+
     <Table/>
 
 
-    <nav aria-label="Page navigation example" class="flex items-center space-x-4 ml-3">
+    <nav aria-label="Page navigation example" class="flex items-center space-x-4">
         <ul class="flex -space-x-px text-sm">
             <li>
                 <a href="#"
@@ -37,6 +52,15 @@
                    class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading shadow-xs font-medium leading-5 rounded-e-base text-sm px-3 h-9 focus:outline-none">Next</a>
             </li>
         </ul>
+        <form class="mx-auto">
+            <div class="flex items-center space-x-2">
+                <label for="visitors" class="text-sm font-medium text-body shrink-0">Go to</label>
+                <input type="text" id="visitors"
+                       class="bg-neutral-secondary-medium w-10 border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block px-2.5 py-2 shadow-xs placeholder:text-body"
+                       placeholder="99" required/>
+                <span class="text-sm font-medium text-body">page</span>
+            </div>
+        </form>
     </nav>
 
 </div>
