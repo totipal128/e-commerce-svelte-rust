@@ -4,7 +4,7 @@ node_modules
 /.svelte-kit
 /package
 .vscode
-.env
+src-tauri/.env
 .env.*
 !.env.example
 vite.config.js.timestamp-*

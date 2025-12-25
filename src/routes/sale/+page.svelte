@@ -6,11 +6,11 @@
     let header = [
         {name: 'Code Order', value: 'code'},
         {name: 'Tanggal', value: 'date'},
-        {name: 'Tanggal', value: 'date'},
+        {name: 'Pelanggan', value: 'consumer'},
     ];
 
     let dataTable = [
-        {name: 'John', age: 25},
+        {code: '0001', date: "02-01-2026", consumer: "totipal"},
     ];
 
 </script>

@@ -84,19 +84,6 @@
         if (!refs[r][c]) refs[r][c] = null;
     }
 
-    async function keydown(e, r, c) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-
-            onFocus.row = r + 1;
-            onFocus.cell = c;
-
-            await tick(); // tunggu DOM siap
-            refs[r + 1]?.[c]?.focus();
-
-        }
-    }
-
     function savekeydown(e) {
         if (e.key === "F8" || e === "F8") {
             openModalAdd = !openModalAdd
@@ -110,6 +97,21 @@
     }
 
 
+    async function keydown(e, r, c) {
+        if (e.key === "Enter") {
+
+            handleCodeInput(e.target.value, r)
+
+            e.preventDefault();
+
+            onFocus.row = r + 1;
+            onFocus.cell = c;
+
+            await tick(); // tunggu DOM siap
+            refs[r + 1]?.[c]?.focus();
+        }
+    }
+
     function handleCodeInput(code, index_row) {
         if (!code) return;
 
@@ -118,7 +120,7 @@
         );
 
         // ✅ Jika code sudah ada → tambah qty
-        
+
         if (dupIndex !== -1) {
             data_c[dupIndex].qty += 1;
             data_c[dupIndex].total =
@@ -301,7 +303,7 @@
 													class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-2.5 py-2 shadow-xs placeholder:text-body"
 													bind:value={item[header.value]}
 													bind:this={refs[i][hi]}
-													oninput={(e) =>( handleCodeInput(e.target.value, i)) }
+
 													onkeydown={(e)=> keydown(e, i, hi)}
 													placeholder=""
 											/>
