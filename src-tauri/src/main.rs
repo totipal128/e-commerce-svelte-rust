@@ -17,6 +17,7 @@ pub async fn conn_postgrest() -> Result<Pool<Postgres>, sqlx::Error> {
         return result;
     }
 
+    println!("Connection To Databases Failed !!!");
     result
 }
 
