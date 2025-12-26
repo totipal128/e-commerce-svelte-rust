@@ -1,34 +1,40 @@
-use crate::app::authentication::model::users::{UserFilter, UserNoPass};
+use crate::app::authentication::model::users::{PaginationUser, UserFilter, UserNoPass};
 use crate::conn_postgrest;
 use sqlx::Postgres;
-pub async fn get_all_user(filter: Option<UserFilter>) -> Result<Vec<UserNoPass>, sqlx::Error> {
-    // koneksike databases
-    let pool = conn_postgrest()
-        .await
-        .expect("Failed to connect to Postgres");
+use tauri::CursorIcon::Default;
 
-    // query filter
-    let mut query_set = sqlx::QueryBuilder::<Postgres>::new("select * from users");
+pub async fn get_all_user(filter: Option<UserFilter>) -> Result<PaginationUser, String> {
+    let pool = conn_postgrest().await.map_err(|e| e.to_string())?;
 
-    // filter
+    let mut query_set =
+        sqlx::QueryBuilder::<Postgres>::new("SELECT *, COUNT(*) OVER() AS total FROM users");
+
     if let Some(filter) = filter {
         let mut has_where = false;
 
-        if filter.search.is_some() {
+        if let Some(search) = filter.search {
             query_set.push(if !has_where { " WHERE" } else { " AND" });
-            query_set.push(" username ilike ");
-            query_set.push_bind(format!("%{}%", filter.search.unwrap()));
+            query_set.push(" username ILIKE ");
+            query_set.push_bind(format!("%{}%", search));
+            query_set.push(" OR email ILIKE ");
+            query_set.push_bind(format!("%{}%", search));
+            query_set.push(" OR name ILIKE ");
+            query_set.push_bind(format!("%{}%", search));
             has_where = true;
         }
-    } else {
-        // order
-        query_set.push(" ORDER BY id desc");
     }
 
-    let user = query_set
+    let users = query_set
         .build_query_as::<UserNoPass>()
         .fetch_all(&pool)
-        .await?;
+        .await
+        .map_err(|e| e.to_string())?;
 
-    return Ok(user);
+    let count = users.first().map(|u| u.total).unwrap_or(None);
+
+    Ok(PaginationUser {
+        result: Some(users),
+        count,
+        ..PaginationUser::default()
+    })
 }

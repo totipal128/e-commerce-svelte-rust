@@ -3,22 +3,8 @@
 
 use sqlx::{Pool, Postgres};
 
-mod app;
-mod base;
-
 fn main() {
     e_commerce_lib::run()
-}
-
-pub async fn conn_postgrest() -> Result<Pool<Postgres>, sqlx::Error> {
-    let result = crate::base::database::postgres::conn::postgrest_conn().await;
-
-    if result.is_ok() {
-        return result;
-    }
-
-    println!("Connection To Databases Failed !!!");
-    result
 }
 
 // mod tests {
