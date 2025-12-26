@@ -1,4 +1,4 @@
-use crate::app::authentication::model::users::{PaginationUser, UserFilter, UserNoPass};
+use crate::app::authentication::model::users::{PaginationUser, UserFilter};
 use crate::app::authentication::repository::users_repo;
 
 #[tauri::command]

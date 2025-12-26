@@ -1,7 +1,6 @@
 use crate::app::master_data::model::items::{Items, ItemsCreate, ItemsFilter, PaginationItems};
 use crate::conn_postgrest;
 use sqlx::Postgres;
-use tauri::CursorIcon::Default;
 
 pub async fn get_all_items(filter: Option<ItemsFilter>) -> Result<PaginationItems, String> {
     let pool = conn_postgrest().await.map_err(|e| e.to_string())?;

@@ -1,4 +1,4 @@
-use crate::app::master_data::model::items::{Items, ItemsFilter, PaginationItems};
+use crate::app::master_data::model::items::{ItemsFilter, PaginationItems};
 use crate::app::master_data::repository::items_repo;
 
 #[tauri::command]

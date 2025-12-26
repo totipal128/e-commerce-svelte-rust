@@ -2,7 +2,6 @@ use sqlx::migrate::Migrator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
-use std::fmt::format;
 use std::path::Path;
 
 pub async fn postgrest_conn() -> Result<Pool<Postgres>, sqlx::Error> {

@@ -1,7 +1,6 @@
 use crate::app::authentication;
 use crate::app::authentication::model::users::{UserFilter, UserNoPass};
 use crate::conn_postgrest;
-use serde::de::Unexpected::Str;
 #[tokio::test]
 async fn authenticate_user() {
     let pool = conn_postgrest()
