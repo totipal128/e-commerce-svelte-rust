@@ -1,9 +1,9 @@
 use crate::app::authentication::model::users::{PaginationUser, UserFilter, UserNoPass};
-use crate::conn_postgrest;
+use crate::base::database::postgres::conn::db_pool;
 use sqlx::Postgres;
 
 pub async fn get_all_user(filter: Option<UserFilter>) -> Result<PaginationUser, String> {
-    let pool = conn_postgrest().await.map_err(|e| e.to_string())?;
+    let pool = db_pool().await.map_err(|e| e.to_string())?;
 
     let mut query_set =
         sqlx::QueryBuilder::<Postgres>::new("SELECT *, COUNT(*) OVER() AS total FROM users");
@@ -25,7 +25,7 @@ pub async fn get_all_user(filter: Option<UserFilter>) -> Result<PaginationUser, 
 
     let users = query_set
         .build_query_as::<UserNoPass>()
-        .fetch_all(&pool)
+        .fetch_all(pool)
         .await
         .map_err(|e| e.to_string())?;
 

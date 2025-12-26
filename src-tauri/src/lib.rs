@@ -3,19 +3,6 @@ use sqlx::{Pool, Postgres};
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod app;
 mod base;
-pub async fn conn_postgrest() -> Result<Pool<Postgres>, sqlx::Error> {
-    let result = crate::base::database::postgres::conn::postgrest_conn().await;
-
-    // automatis migrasi data ke databases
-    base::database::postgres::conn::migrate_db().await?;
-
-    if result.is_ok() {
-        return result;
-    }
-
-    println!("Connection To Databases Failed !!!");
-    result
-}
 
 #[tauri::command]
 fn greet(name: &str) -> String {

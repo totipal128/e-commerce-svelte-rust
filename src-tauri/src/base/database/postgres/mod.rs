@@ -1,2 +1,3 @@
 pub mod conn;
-mod orm;
+pub mod orm;
+mod test;

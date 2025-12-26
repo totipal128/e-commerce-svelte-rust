@@ -1,10 +1,21 @@
-use crate::base::database::postgres::conn::postgrest_conn;
+use crate::base::database::postgres::conn::{close_db, db_pool};
+use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgRow;
 use sqlx::FromRow;
 use std::iter::Filter;
 use tauri::webview::cookie::time::Error::Format;
 
-struct QueryBuilder<T> {
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Pagination<T> {
+    pub page: i64,
+    pub page_size: i64,
+    pub total_page: i64,
+    pub count: i64,
+    pub next: bool,
+    pub prev: bool,
+    pub results: Vec<T>,
+}
+pub struct QueryBuilderPostgrest<T> {
     model: Option<String>,
     select: Option<String>,
     filter: Option<String>,
@@ -14,11 +25,11 @@ struct QueryBuilder<T> {
 }
 
 // Query builder generik
-impl<T> QueryBuilder<T>
+impl<T> QueryBuilderPostgrest<T>
 where
     T: Clone + Send + Unpin + for<'r> FromRow<'r, PgRow>,
 {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             model: None,
             select: None,
@@ -29,16 +40,16 @@ where
         }
     }
 
-    fn model(mut self, model: &str) -> Self {
+    pub fn model(mut self, model: &str) -> Self {
         self.model = Some(model.to_string());
         self
     }
-    fn select(mut self, select: &str) -> Self {
+    pub fn select(mut self, select: &str) -> Self {
         self.select = Some(format!("{} ", select));
         self
     }
 
-    fn where_clause(mut self, condition: &str) -> Self {
+    pub fn where_clause(mut self, condition: &str) -> Self {
         if let Some(ref mut filter) = self.filter {
             filter.push_str(" AND ");
             filter.push_str(condition);
@@ -48,7 +59,7 @@ where
         }
         self
     }
-    fn or_clause(mut self, condition: &str) -> Self {
+    pub fn or_clause(mut self, condition: &str) -> Self {
         if let Some(ref mut filter) = self.filter {
             filter.push_str(" ");
             filter.push_str(" OR ");
@@ -60,20 +71,20 @@ where
         self
     }
 
-    fn order(mut self, order: &str) -> Self {
+    pub fn order(mut self, order: &str) -> Self {
         self.order_by = Some(format!("ORDER BY {} ", order));
         self
     }
-    fn group(mut self, group: &str) -> Self {
+    pub fn group(mut self, group: &str) -> Self {
         self.group_by = Some(format!("GROUP BY {} ", group));
         self
     }
 
-    async fn find_all(&self) -> Result<Vec<T>, String> {
+    pub async fn find_all(&self) -> Result<Vec<T>, String> {
         let model = self.model.as_deref().ok_or("Model tidak boleh kosong")?;
 
         // Ambil pool atau kembalikan error
-        let pool = postgrest_conn().await.map_err(|e| e.to_string())?;
+        let pool = db_pool().await.map_err(|e| e.to_string())?;
 
         // let query_str = "SELECT * FROM users";
         let query_str = format!(
@@ -86,18 +97,73 @@ where
         );
 
         let result = sqlx::query_as::<_, T>(query_str.as_str())
-            .fetch_all(&pool) // pool sudah murni
+            .fetch_all(pool) // pool sudah murni
             .await
             .map_err(|e| e.to_string())?;
 
         Ok(result)
     }
 
-    async fn find_one(&self) -> Result<T, String> {
+    pub async fn find_by_pagination(
+        &self,
+        page: i64,
+        page_size: i64,
+    ) -> Result<Pagination<T>, String> {
         let model = self.model.as_deref().ok_or("Model tidak boleh kosong")?;
 
         // Ambil pool atau kembalikan error
-        let pool = postgrest_conn().await.map_err(|e| e.to_string())?;
+        let pool = db_pool().await.map_err(|e| e.to_string())?;
+
+        let page = if page < 1 { 1 } else { page };
+        let offset = (page - 1) * page_size;
+
+        /* ================= COUNT QUERY ================= */
+        let count_query = format!(
+            "SELECT COUNT(*) FROM {} {}",
+            model,
+            self.filter.as_deref().unwrap_or("")
+        );
+
+        let total: i64 = sqlx::query_scalar(&count_query)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let total_page = (total as f64 / page_size as f64).ceil() as i64;
+
+        /* ================= DATA QUERY ================= */
+        let data_query = format!(
+            "SELECT {} FROM {} {} {} {} LIMIT {} OFFSET {}",
+            self.select.as_deref().unwrap_or("*"),
+            model,
+            self.filter.as_deref().unwrap_or(""),
+            self.order_by.as_deref().unwrap_or(""),
+            self.group_by.as_deref().unwrap_or(""),
+            page_size,
+            offset,
+        );
+
+        let results = sqlx::query_as::<_, T>(&data_query)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(Pagination {
+            page,
+            page_size,
+            total_page,
+            count: total,
+            next: page < total_page,
+            prev: page > 1,
+            results,
+        })
+    }
+
+    pub async fn find_one(&self) -> Result<T, String> {
+        let model = self.model.as_deref().ok_or("Model tidak boleh kosong")?;
+
+        // Ambil pool atau kembalikan error
+        let pool = db_pool().await.map_err(|e| e.to_string())?;
 
         // let query_str = "SELECT * FROM users";
         let query_str = format!(
@@ -110,26 +176,12 @@ where
         );
 
         let result = sqlx::query_as::<_, T>(query_str.as_str())
-            .fetch_one(&pool) // pool sudah murni
+            .fetch_one(pool) // pool sudah murni
             .await
             .map_err(|e| e.to_string())?;
 
+        close_db().await;
+
         Ok(result)
     }
-}
-
-#[derive(Clone, Default, FromRow, Debug)]
-struct UserExp {
-    pub username: String,
-    pub password: String,
-}
-#[tokio::test]
-async fn test_queryBuilder() {
-    let results = QueryBuilder::<UserExp>::new()
-        .model("users")
-        .where_clause("id > 10")
-        .find_all()
-        .await;
-
-    println!("{:?}", results);
 }

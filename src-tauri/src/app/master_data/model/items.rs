@@ -1,5 +1,6 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 #[derive(Debug, Serialize, Default)]
 pub struct PaginationItems {
@@ -12,7 +13,7 @@ pub struct PaginationItems {
     pub result: Option<Vec<Items>>,
 }
 
-#[derive(sqlx::FromRow, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
 pub struct Items {
     pub id: i32,
     pub barcode: String,

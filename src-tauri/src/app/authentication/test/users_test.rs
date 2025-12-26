@@ -1,14 +1,13 @@
 use crate::app::authentication;
 use crate::app::authentication::model::users::{UserFilter, UserNoPass};
-use crate::conn_postgrest;
+use crate::base::database::postgres::conn::db_pool;
+
 #[tokio::test]
 async fn authenticate_user() {
-    let pool = conn_postgrest()
-        .await
-        .expect("Failed to connect to Postgres");
+    let pool = db_pool().await.expect("Failed to connect to Postgres");
 
     let data1 = sqlx::query_as::<_, UserNoPass>("select * from users order by id desc limit 1")
-        .fetch_all(&pool)
+        .fetch_all(pool)
         .await
         .unwrap();
 

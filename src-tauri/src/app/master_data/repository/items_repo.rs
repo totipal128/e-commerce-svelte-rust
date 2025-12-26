@@ -1,9 +1,9 @@
 use crate::app::master_data::model::items::{Items, ItemsCreate, ItemsFilter, PaginationItems};
-use crate::conn_postgrest;
+use crate::base::database::postgres::conn::db_pool;
 use sqlx::Postgres;
 
 pub async fn get_all_items(filter: Option<ItemsFilter>) -> Result<PaginationItems, String> {
-    let pool = conn_postgrest().await.map_err(|e| e.to_string())?;
+    let pool = db_pool().await.map_err(|e| e.to_string())?;
 
     let mut query_set = sqlx::QueryBuilder::<Postgres>::new(
         "select
@@ -33,7 +33,7 @@ pub async fn get_all_items(filter: Option<ItemsFilter>) -> Result<PaginationItem
 
     let data = query_set
         .build_query_as::<Items>()
-        .fetch_all(&pool)
+        .fetch_all(pool)
         .await
         .map_err(|e| e.to_string())?;
 

@@ -878,6 +878,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dotenvy",
+ "once_cell",
  "serde",
  "serde_json",
  "sqlx",
