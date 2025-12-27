@@ -75,3 +75,113 @@ sqlx migrate revert
 
 untuk membatalkan migrasi terakhir
 
+## IMPLEMTASI CRUD ORM
+
+unuk melakukan implemetasi (create, read, update, delete) dengan
+<br>
+import data dari module database postgres
+[use crate::base::database::postgres::orm::QueryBuilderPostgrest]();
+
+### Example Model User
+
+```angular2html
+
+#[derive(Clone, Default, FromRow, Debug)]
+struct User {
+pub id: i32,
+pub username: String,
+pub email: String,
+pub password: String,
+
+pub name: Option<String>,
+pub address: Option<String>,
+pub no_handphone: Option<String>,
+pub barcode: Option<String>,
+
+pub created_at: DateTime<Local>,
+pub updated_at: DateTime<Local>,
+pub deleted_at: Option<DateTime<Local>>,
+}
+
+impl Model for User {
+const TABLE: &'static str = "users";
+const FIELDS: &'static [&'static str] = &[
+stringify!(username),
+stringify!(email),
+stringify!(password),
+stringify!(name),
+stringify!(address),
+stringify!(no_handphone),
+stringify!(barcode),
+];
+}
+```
+
+### Read
+
+example read pagination
+
+```angular2html
+#[tokio::test]
+async fn test_query_read_pagination() {
+let results = QueryBuilderPostgrest::<User>::new()
+.find_by_pagination(1, 10)
+.await;
+
+println!("{:?}", results);
+}
+
+```
+
+example read all
+
+```angular2html
+#[tokio::test]
+async fn test_query_read_all() {
+let results = QueryBuilderPostgrest::<User>::new()
+.where_clause("username='toti' ")
+.find_all()
+.await;
+
+println!("{:?}", results);
+}
+
+```
+
+example read first terbaru
+
+```angular2html
+#[tokio::test]
+async fn test_query_one_first() {
+let results = QueryBuilderPostgrest::<User>::new().find_one_first().await;
+
+println!("{:?}", results);
+}
+
+```
+
+### Create
+
+example
+
+```angular2html
+#[tokio::test]
+async fn test_query_create() {
+let create = QueryBuilderPostgrest::<User>::new()
+.values(vec![
+"toti",
+"toti@ecxample.com",
+"password",
+"nama toti",
+"alamat",
+"no_handphone",
+"NULL",
+])
+.create()
+.await;
+
+println!("{:?}", create);
+}
+```
+
+urutan value berdasarkan urutan FIELD dari model impl MODEL user

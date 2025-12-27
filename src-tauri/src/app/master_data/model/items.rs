@@ -2,37 +2,30 @@ use crate::base::database::postgres::orm::Model;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-
-#[derive(Debug, Serialize, Default)]
-pub struct PaginationItems {
-    pub is_next: Option<bool>,
-    pub is_previous: Option<bool>,
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub total_page: Option<i64>,
-    pub count: Option<i64>,
-    pub result: Option<Vec<Items>>,
-}
-
 #[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
 pub struct Items {
     pub id: i32,
     pub barcode: String,
     pub name: String,
-    pub items_type_id: Option<i32>,
-    pub created_by: Option<i32>,
-    pub created_at: DateTime<Local>,
-    pub updated_at: DateTime<Local>,
-    pub deleted_at: Option<DateTime<Local>>,
+    pub items_category_id: Option<i32>,
+    pub type_unit: Option<i32>,
+    pub qty_stock: DateTime<Local>,
+    pub created_by: DateTime<Local>,
+    pub created_at: Option<DateTime<Local>>,
     pub price: serde_json::Value,
-    pub total: Option<i64>,
 }
 impl Model for Items {
-    const TABLE: &'static str = "users";
-    const FIELDS: &'static [&'static str] = &[stringify!(name), stringify!(email)];
+    const TABLE: &'static str = "items";
+    const FIELDS_INSERT: &'static [&'static str] = &[
+        stringify!(barcode),
+        stringify!(name),
+        stringify!(items_category_id),
+        stringify!(type_unit),
+        stringify!(qty_stock),
+    ];
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
 struct ItemPrice {
     id: i32,
     item_id: i32,
@@ -41,6 +34,16 @@ struct ItemPrice {
     price_buy: f64,
     price_sell: f64,
     parent_id: Option<i32>,
+}
+impl Model for ItemPrice {
+    const TABLE: &'static str = "items";
+    const FIELDS_INSERT: &'static [&'static str] = &[
+        stringify!(barcode),
+        stringify!(name),
+        stringify!(items_category_id),
+        stringify!(type_unit),
+        stringify!(qty_stock),
+    ];
 }
 
 #[derive(Debug, Deserialize, Default)]
@@ -51,14 +54,6 @@ pub struct ItemsFilter {
     pub name: Option<String>,
     pub type_item: Option<String>,
     pub items_type_id: Option<i32>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ItemsCreate {
-    pub id: i32,
-    pub barcode: String,
-    pub name: String,
-    pub items_type_id: Option<i32>,
-    pub created_by: Option<i32>,
-    pub price: Option<Vec<ItemPrice>>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
 }

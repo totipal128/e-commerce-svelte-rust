@@ -20,7 +20,7 @@ struct User {
 }
 impl Model for User {
     const TABLE: &'static str = "users";
-    const FIELDS: &'static [&'static str] = &[
+    const FIELDS_INSERT: &'static [&'static str] = &[
         stringify!(username),
         stringify!(email),
         stringify!(password),
@@ -34,6 +34,10 @@ impl Model for User {
 #[tokio::test]
 async fn test_query_read_pagination() {
     let results = QueryBuilderPostgrest::<User>::new()
+        // .or_clause("username", "toti", None)
+        // .exclude_clause("username", "toti", None)
+        // .where_clause("username", "toti", None)
+        // .ilike("username", "t")
         .find_by_pagination(1, 10)
         .await;
 
@@ -43,7 +47,7 @@ async fn test_query_read_pagination() {
 #[tokio::test]
 async fn test_query_read_all() {
     let results = QueryBuilderPostgrest::<User>::new()
-        .where_clause("username='toti' ")
+        .where_clause("username", "toti", None)
         .find_all()
         .await;
 
@@ -61,8 +65,8 @@ async fn test_query_one_first() {
 async fn test_query_create() {
     let create = QueryBuilderPostgrest::<User>::new()
         .values(vec![
-            "toti",
-            "toti@ecxample.com",
+            "toti1",
+            "toti1@ecxample.com",
             "password",
             "nama toti",
             "alamat",
@@ -78,9 +82,34 @@ async fn test_query_create() {
 #[tokio::test]
 async fn test_update_one_field() {
     let create = QueryBuilderPostgrest::<User>::new()
-        .set_one("barcode", "123459999")
-        .set_one("password", "123459999")
+        .set_one("barcode", "123459999", Some("int"))
+        .set_one("password", "123459999", None)
         .update("id=1")
         .await;
     println!("{:?}", create);
+}
+#[tokio::test]
+async fn test_check() {
+    let create = QueryBuilderPostgrest::<User>::new()
+        .ilike("barcode", "123459999")
+        .ilike("barcode", "123459999")
+        .ilike("barcode", "123459999")
+        .check_set_one();
+    println!("{:?}", create);
+}
+#[tokio::test]
+async fn test_delete() {
+    let create = QueryBuilderPostgrest::<User>::new()
+        .where_clause("id", "3", Some("int"))
+        .delete()
+        .await;
+    println!("{:?}", create);
+}
+
+#[tokio::test]
+async fn test_query() {
+
+    // let create = QueryBuilderPostgrest::<User>::new().query("").fetch_one().await
+
+    // println!("{:?}", create);
 }
