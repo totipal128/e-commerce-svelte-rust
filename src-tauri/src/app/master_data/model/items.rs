@@ -1,3 +1,4 @@
+use crate::base::database::postgres::orm::Model;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -25,6 +26,10 @@ pub struct Items {
     pub deleted_at: Option<DateTime<Local>>,
     pub price: serde_json::Value,
     pub total: Option<i64>,
+}
+impl Model for Items {
+    const TABLE: &'static str = "users";
+    const FIELDS: &'static [&'static str] = &[stringify!(name), stringify!(email)];
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

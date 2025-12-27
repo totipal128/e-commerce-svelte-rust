@@ -1,3 +1,3 @@
 pub mod conn;
 pub mod orm;
-mod test;
+mod orm_test;
