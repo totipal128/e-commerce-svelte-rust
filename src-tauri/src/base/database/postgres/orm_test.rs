@@ -63,18 +63,7 @@ async fn test_query_one_first() {
 
 #[tokio::test]
 async fn test_query_create() {
-    let create = QueryBuilderPostgrest::<User>::new()
-        .values(vec![
-            "toti1",
-            "toti1@ecxample.com",
-            "password",
-            "nama toti",
-            "alamat",
-            "no_handphone",
-            "NULL",
-        ])
-        .create()
-        .await;
+    let create = QueryBuilderPostgrest::<User>::new().create().await;
 
     println!("{:?}", create);
 }

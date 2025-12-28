@@ -17,6 +17,10 @@ pub fn run() {
             greet,
             app::authentication::controller::users::get_all_users,
             app::master_data::controller::items::items_get,
+            app::master_data::controller::items::get_items_by_id,
+            app::master_data::controller::items::items_create,
+            app::master_data::controller::items::items_update,
+            app::master_data::controller::items::items_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

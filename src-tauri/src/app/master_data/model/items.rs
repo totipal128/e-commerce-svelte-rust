@@ -4,15 +4,14 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 #[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
 pub struct Items {
-    pub id: i32,
-    pub barcode: String,
-    pub name: String,
+    pub id: Option<i32>,
+    pub barcode: Option<String>,
+    pub name: Option<String>,
+    pub type_unit: Option<String>,
     pub items_category_id: Option<i32>,
-    pub type_unit: Option<i32>,
-    pub qty_stock: DateTime<Local>,
-    pub created_by: DateTime<Local>,
+    pub qty_stock: Option<i32>,
+    pub created_by: Option<DateTime<Local>>,
     pub created_at: Option<DateTime<Local>>,
-    pub price: serde_json::Value,
 }
 impl Model for Items {
     const TABLE: &'static str = "items";
@@ -25,16 +24,6 @@ impl Model for Items {
     ];
 }
 
-#[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
-struct ItemPrice {
-    id: i32,
-    item_id: i32,
-    barcode: String,
-    type_item: String,
-    price_buy: f64,
-    price_sell: f64,
-    parent_id: Option<i32>,
-}
 impl Model for ItemPrice {
     const TABLE: &'static str = "items";
     const FIELDS_INSERT: &'static [&'static str] = &[
@@ -56,4 +45,27 @@ pub struct ItemsFilter {
     pub items_type_id: Option<i32>,
     pub page: Option<i64>,
     pub page_size: Option<i64>,
+}
+
+// Create
+#[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
+pub struct ItemsCreate {
+    pub barcode: Option<String>,
+    pub name: Option<String>,
+    pub type_unit: Option<String>,
+    pub items_category_id: Option<i32>,
+    pub qty_stock: Option<i32>,
+    pub price: Option<Vec<ItemPrice>>,
+}
+
+#[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
+struct ItemPrice {
+    id: Option<i32>,
+    item_id: Option<i32>,
+    barcode: Option<String>,
+    type_item: Option<String>,
+    price_buy: Option<f64>,
+    price_sell: Option<f64>,
+    content: Option<i32>,
+    parent_id: Option<i32>,
 }

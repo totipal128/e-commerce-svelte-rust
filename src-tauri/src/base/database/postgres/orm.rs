@@ -39,8 +39,10 @@ pub struct QueryBuilderPostgrest<T> {
     update_set: Option<String>,
     update_one: bool,
 
-    insert_value: Option<String>,
-    values_data: Option<Vec<String>>,
+    insert_field: Option<Vec<String>>,
+    insert_value: Option<Vec<String>>,
+
+    update_value: Option<Vec<String>>,
     _marker: std::marker::PhantomData<T>,
 }
 
@@ -59,8 +61,11 @@ where
             filter: None,
             update_set: None,
             update_one: false,
+
+            insert_field: None,
             insert_value: None,
-            values_data: None,
+
+            update_value: None,
             filter_ilike: None,
             filter_AND: None,
             filter_OR: None,
@@ -177,6 +182,41 @@ where
         self.filter_AND
             .get_or_insert_with(Vec::new)
             .push(format!("{}={} ", field, n_value));
+
+        self
+    }
+    pub fn where_clause_i32(mut self, field: &str, value: i32) -> Self {
+        self.filter_AND
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={} ", field, value));
+
+        self
+    }
+    pub fn where_clause_i64(mut self, field: &str, value: i64) -> Self {
+        self.filter_AND
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={} ", field, value));
+
+        self
+    }
+    pub fn where_clause_f32(mut self, field: &str, value: f32) -> Self {
+        self.filter_AND
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={} ", field, value));
+
+        self
+    }
+    pub fn where_clause_f64(mut self, field: &str, value: f64) -> Self {
+        self.filter_AND
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={} ", field, value));
+
+        self
+    }
+    pub fn where_clause_bool(mut self, field: &str, value: bool) -> Self {
+        self.filter_AND
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={} ", field, value));
 
         self
     }
@@ -377,19 +417,71 @@ where
     }
 
     // CREATED
-    pub fn values(mut self, value: Vec<&str>) -> Self {
-        self.values_data = Some(value.iter().map(|v| v.to_string()).collect());
+    pub fn insert_i64(mut self, field: &str, value: i64) -> Self {
+        self.insert_field
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", field));
+        self.insert_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", value));
+
         self
     }
+    pub fn insert_i32(mut self, field: &str, value: i32) -> Self {
+        self.insert_field
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", field));
+        self.insert_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", value));
+
+        self
+    }
+    pub fn insert_f64(mut self, field: &str, value: f64) -> Self {
+        self.insert_field
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", field));
+        self.insert_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", value));
+
+        self
+    }
+    pub fn insert_bool(mut self, field: &str, value: bool) -> Self {
+        self.insert_field
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", field));
+        self.insert_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", value));
+
+        self
+    }
+    pub fn insert_str(mut self, field: &str, value: &str) -> Self {
+        self.insert_field
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", field));
+        self.insert_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("'{}'", value));
+
+        self
+    }
+
     pub async fn create(&self) -> Result<T, String> {
-        let fields = T::FIELDS_INSERT.join(", ");
+        if !self.insert_field.is_some() {
+            return Err(format!("Not Data Insert !!"));
+        }
+
+        let fields = self.insert_field.as_deref().unwrap().join(", ");
         let values: Vec<&str> = self
-            .values_data
+            .insert_value
             .as_ref()
             .unwrap()
             .into_iter()
             .map(|v| v.as_str())
             .collect();
+
         let params = (1..=values.len())
             .map(|i| format!("${}", i))
             .collect::<Vec<_>>()
@@ -399,17 +491,15 @@ where
             "INSERT INTO {} ({}) VALUES ({}) RETURNING *",
             self.model.as_deref().unwrap_or(""),
             fields,
-            params
+            values.join(", ") // params
         );
 
         let pool = db_pool().await.map_err(|e| e.to_string())?;
 
-        let mut q = sqlx::query_as::<_, T>(&sql);
-        for v in values {
-            q = q.bind(v);
-        }
-
-        let result = q.fetch_one(pool).await.map_err(|e| e.to_string())?;
+        let result = sqlx::query_as::<_, T>(&sql)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| e.to_string())?;
 
         Ok(result)
     }
@@ -426,11 +516,9 @@ where
         if let Some(ref mut set) = self.update_set {
             set.push_str(" , ");
             set.push_str(format!("{}={}", field, n_value).as_str());
-            println!("{}= {}", field, n_value);
         } else {
             let cond = format!(" {}={} ", field, n_value);
             self.update_set = Some(cond.to_string());
-            println!("{}= {}", field, n_value);
         }
         self.update_one = true;
         self
@@ -445,8 +533,8 @@ where
         }
 
         self.update_set = Some(data_map.join(", "));
-        if self.values_data == None {
-            self.values_data = Some(value.iter().map(|v| v.to_string()).collect());
+        if self.update_value == None {
+            self.update_value = Some(value.iter().map(|v| v.to_string()).collect());
         }
         self
     }
@@ -464,8 +552,6 @@ where
                 cond.to_string(),
             );
 
-            println!("sql: {}", sql);
-
             let mut q = sqlx::query_as::<_, T>(&sql);
             result = q.fetch_one(pool).await.map_err(|e| e.to_string())?;
 
@@ -481,7 +567,7 @@ where
             );
 
             let mut q = sqlx::query_as::<_, T>(&sql);
-            for v in self.values_data.as_ref() {
+            for v in self.update_value.as_ref() {
                 q = q.bind(v);
             }
             result = q.fetch_one(pool).await.map_err(|e| e.to_string())?;
