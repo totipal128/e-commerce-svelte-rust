@@ -3,11 +3,67 @@
 
     const dispatch = createEventDispatcher();
 
-    let {openRemove = false} = $props();
+    import {invoke} from "@tauri-apps/api/core";
+    import {onMount} from "svelte";
 
-    function closeModal() {
-        dispatch('close');
+    let {
+        openRemove = false,
+        id = 0
+    } = $props();
+
+    let loading = $state(true)
+    let data = $state([])
+
+    async function fetchData() {
+        loading = true
+        try {
+            const result = await invoke("get_detail_users_by_id", {
+                id: id
+            })
+
+            data = result.data
+        } catch (err) {
+            console.log("err", err)
+        } finally {
+            loading = false;
+        }
+
     }
+
+    async function deleteData() {
+        loading = true
+        try {
+            const result = await invoke("delete_users", {
+                id: id
+            })
+
+            data = result.data
+        } catch (err) {
+            console.log("err", err)
+        } finally {
+            loading = false;
+
+            closeModal(true)
+        }
+
+    }
+
+    onMount(fetchData)
+
+
+    function closeModal(confirm) {
+        let c = false
+        if (typeof (confirm) !== "boolean") {
+            c = true
+        }
+
+        dispatch('close', {confirm: c});
+    }
+
+    async function confirmModal() {
+        await deleteData()
+    }
+
 </script>
 
 {#if openRemove}
@@ -40,15 +96,14 @@
 				</svg>
 
 				<h3 class="mb-6 text-body">
-					Are you sure you want to delete this product from your account?
+					Apakah Anda Yakin Ingin Menghapus Data Users {data.name} ?
 				</h3>
 
 				<div class="flex gap-4 justify-center">
 					<button
-							on:click={closeModal}
-							class="bg-danger hover:bg-danger-strong
-                   text-white px-4 py-2.5 rounded-base">
-						Yes, I'm sure
+							on:click={confirmModal}
+							class="bg-danger hover:bg-danger-strong text-white px-4 py-2.5 rounded-base">
+						Ya
 					</button>
 
 					<button
@@ -56,7 +111,7 @@
 							class="bg-neutral-secondary-medium
                    hover:bg-neutral-tertiary-medium
                    px-4 py-2.5 rounded-base">
-						No, cancel
+						Tidak
 					</button>
 				</div>
 			</div>

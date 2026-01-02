@@ -28,7 +28,7 @@ CREATE TABLE role
     deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
-CREATE TABLE items_suppliers
+CREATE TABLE users_role
 (
     users_id   INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     role_id    INTEGER NOT NULL REFERENCES role (id) ON DELETE CASCADE,

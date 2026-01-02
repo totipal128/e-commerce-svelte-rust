@@ -21,7 +21,15 @@ async fn get_users() {
         ..UserFilter::default()
     };
 
-    match authentication::repository::users_repo::get_all_user(Some(user_filter)).await {
+    match authentication::repository::users_repo::get_all(Some(user_filter)).await {
+        Ok(users) => println!("Users: {:?}", users),
+        Err(err) => panic!("DB error: {err}"),
+    }
+}
+
+#[tokio::test]
+async fn get_users_detail() {
+    match authentication::repository::users_repo::get_by_id(1).await {
         Ok(users) => println!("Users: {:?}", users),
         Err(err) => panic!("DB error: {err}"),
     }

@@ -11,10 +11,12 @@
         id = 0
     } = $props();
 
+    let detailData = $state(null)
+
     let loading = $state(true)
     let priceItem = {
         barcode: "",
-        unit: "",
+        type_unit: "",
         parent_type_unit: "",
         price_buy: 0,
         price_sell: 0,
@@ -36,7 +38,7 @@
     async function saveData(data) {
         loading = true
         try {
-            const result = await invoke("items_create", {
+            const result = await invoke("items_update", {
                 data: data
             })
 
@@ -51,16 +53,29 @@
 
     }
 
-    //
-    // onMount(fetchData)
+    async function dataDetail() {
+        loading = true
+        try {
+            const result = await invoke("get_items_by_id", {
+                id: id
+            })
 
-    function closeModal(confirm) {
-        let c = false
-        if (typeof (confirm) !== "boolean") {
-            c = true
+            itemsData = result.data
+
+            console.log(itemsData)
+        } catch (err) {
+            console.log("err", err)
+        } finally {
+            loading = false;
         }
 
-        dispatch('close', {confirm: c});
+    }
+
+    //
+    onMount(dataDetail)
+
+    function closeModal() {
+        dispatch('close');
     }
 
     function removeRowPrice(i) {
@@ -73,7 +88,7 @@
 
     function save(e) {
         itemsData.price[0].barcode = itemsData.barcode
-        itemsData.price[0].unit = itemsData.type_unit
+        itemsData.price[0].type_unit = itemsData.type_unit
         saveData(itemsData)
     }
 </script>
@@ -97,7 +112,7 @@
 				<!--				</svg>-->
 
 				<div class="mx-auto mb-4 text-fg text-2xl text-center w-50 h-12">
-					Tambah Data
+					Update Data
 
 					<div class="h-[2px] bg-gray-400 my-2"></div>
 
@@ -191,7 +206,8 @@
 												<option value="GANTUNG">GANTUNG</option>
 											</select>
 										{:else}
-											<select bind:value={itemsData.price[index].unit} id="countries" class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body">
+											<select bind:value={itemsData.price[index].type_unit} id="countries"
+													class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body">
 												<option selected>Choose a country</option>
 												<option value="PCS">PCS</option>
 												<option value="BOX">BOX</option>
@@ -252,7 +268,7 @@
 						</button>
 
 						<button
-								on:click={closeModal}
+								on:click|stopPropagation={closeModal}
 								class="bg-danger hover:bg-danger-strong text-white px-4 py-2.5 rounded-base">
 							Batal
 						</button>

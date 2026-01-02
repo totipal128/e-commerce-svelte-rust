@@ -185,6 +185,20 @@ where
 
         self
     }
+    pub fn where_clause_String(mut self, field: &str, value: String) -> Self {
+        self.filter_AND
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}='{}' ", field, value));
+
+        self
+    }
+    pub fn where_clause_str(mut self, field: &str, value: &str) -> Self {
+        self.filter_AND
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}='{}' ", field, value));
+
+        self
+    }
     pub fn where_clause_i32(mut self, field: &str, value: i32) -> Self {
         self.filter_AND
             .get_or_insert_with(Vec::new)
@@ -437,6 +451,16 @@ where
 
         self
     }
+    pub fn insert_usize(mut self, field: &str, value: usize) -> Self {
+        self.insert_field
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", field));
+        self.insert_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", value));
+
+        self
+    }
     pub fn insert_f64(mut self, field: &str, value: f64) -> Self {
         self.insert_field
             .get_or_insert_with(Vec::new)
@@ -524,6 +548,50 @@ where
         self
     }
 
+    pub fn set_str(mut self, field: &str, value: &str) -> Self {
+        self.update_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}='{}'", field, value));
+        self.update_one = false;
+        self
+    }
+    pub fn set_i32(mut self, field: &str, value: i32) -> Self {
+        self.update_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={}", field, value));
+
+        self.update_one = false;
+        self
+    }
+    pub fn set_i64(mut self, field: &str, value: i64) -> Self {
+        self.update_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={}", field, value));
+        self.update_one = false;
+        self
+    }
+    pub fn set_f32(mut self, field: &str, value: f32) -> Self {
+        self.update_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={}", field, value));
+        self.update_one = false;
+        self
+    }
+    pub fn set_f64(mut self, field: &str, value: f64) -> Self {
+        self.update_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={}", field, value));
+        self.update_one = false;
+        self
+    }
+    pub fn set_bool(mut self, field: &str, value: bool) -> Self {
+        self.update_value
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}={}", field, value));
+        self.update_one = false;
+        self
+    }
+
     pub fn set(mut self, value: Vec<&str>) -> Self {
         let field = T::FIELDS_INSERT;
 
@@ -536,13 +604,15 @@ where
         if self.update_value == None {
             self.update_value = Some(value.iter().map(|v| v.to_string()).collect());
         }
+
+        self.update_one = false;
         self
     }
     pub async fn update(&self, cond: &str) -> Result<T, String> {
         let pool = db_pool().await.map_err(|e| e.to_string())?;
         let result: T;
 
-        if self.update_one {
+        if self.update_one && self.update_set != None {
             let sql = format!(
                 "UPDATE {} SET {} WHERE {} RETURNING * ;",
                 self.model.as_deref().unwrap_or(""),
@@ -557,19 +627,19 @@ where
 
             Ok(result)
         } else {
+            let mut update_value = self.update_value.clone().unwrap();
+            if update_value.iter().count() < 1 {
+                return Err(format!("gagal mengubah data !"));
+            }
+
             let sql = format!(
-                "UPDATE {} SET {} WHERE {};",
+                "UPDATE {} SET {} WHERE {} RETURNING * ;",
                 self.model.as_deref().unwrap_or(""),
-                self.update_set
-                    .as_ref()
-                    .ok_or("tidak ada data yg di upate ")?,
+                update_value.join(","),
                 cond.to_string(),
             );
 
             let mut q = sqlx::query_as::<_, T>(&sql);
-            for v in self.update_value.as_ref() {
-                q = q.bind(v);
-            }
             result = q.fetch_one(pool).await.map_err(|e| e.to_string())?;
 
             Ok(result)

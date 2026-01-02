@@ -3,6 +3,8 @@
     import items from '$lib/data/items.json';
     import {tick} from "svelte";
     import ModalAdd from "./ModalAddSale.svelte"
+    import {invoke} from "@tauri-apps/api/core";
+    import {onMount} from "svelte";
 
 
     const dispatch = createEventDispatcher();
@@ -16,13 +18,33 @@
 
     } = $props()
 
+    let dataByBarcode = $state(null)
+    let loading = $state(true)
+
+    async function getByBarcodeDetail(barcode) {
+        loading = true
+        try {
+            const result = await invoke("get_items_by_barcode", {
+                barcode: barcode
+            })
+
+            dataByBarcode = result.data
+
+        } catch (err) {
+            console.log("err", err)
+        } finally {
+            loading = false;
+        }
+
+    }
+
     let headers = [
         {name: 'Code Barang', value: 'code', type: 'input-code'},
-        {name: 'Nama Barang', value: 'name', type: 'text'},
-        {name: 'Satuan', value: 'unit', type: 'select'},
-        {name: 'Harga', value: 'price', type: 'number'},
+        {name: 'Nama Barang', value: 'name', type: 'text1'},
+        {name: 'Satuan', value: 'unit', type: 'select1'},
+        {name: 'Harga', value: 'price', type: 'parse-number'},
         {name: 'QTY', value: 'qty', type: 'input-number'},
-        {name: 'Total', value: 'total', type: 'number'},
+        {name: 'Total', value: 'total', type: 'parse-number'},
     ];
     let optionSelectItem = [
         {name: "pcs"},
@@ -99,20 +121,21 @@
 
     async function keydown(e, r, c) {
         if (e.key === "Enter") {
+            if (c === 4) {
+                e.preventDefault();
 
-            handleCodeInput(e.target.value, r)
+                onFocus.row = r + 1;
+                onFocus.cell = 0;
 
-            e.preventDefault();
+                await tick(); // tunggu DOM siap
+                refs[r + 1]?.[0]?.focus();
+            }
 
-            onFocus.row = r + 1;
-            onFocus.cell = c;
-
-            await tick(); // tunggu DOM siap
-            refs[r + 1]?.[c]?.focus();
+            handleCodeInput(e, e.target.value, r, c)
         }
     }
 
-    function handleCodeInput(code, index_row) {
+    async function handleCodeInput(e, code, index_row, index_cell) {
         if (!code) return;
 
         const dupIndex = data_c.findIndex(
@@ -122,10 +145,16 @@
         // ✅ Jika code sudah ada → tambah qty
 
         if (dupIndex !== -1) {
+
             data_c[dupIndex].qty += 1;
             data_c[dupIndex].total =
                 parseNumber(data_c[dupIndex].price) *
                 parseNumber(data_c[dupIndex].qty);
+
+            total = parseNumber(data_c.reduce((acc, item) => acc + item.total, 0)).toLocaleString('id-ID', {
+                style: 'currency',
+                currency: 'IDR'
+            });
 
             // reset baris aktif
             data_c[index_row] = {
@@ -146,19 +175,39 @@
             }
 
             if (index_row !== null) {
-                let found = items.find(item => item.code === data_c[index_row].code);
+                await getByBarcodeDetail(data_c[index_row].code)
 
-                if (found === undefined) return;
+                if (dataByBarcode == null) {
+                    e.preventDefault();
 
-                data_c[index_row].name = found.name;
-                data_c[index_row].unit = found.unit;
-                data_c[index_row].price = found.price;
-                data_c[index_row].total = parseNumber(found.price) * parseNumber(data_c[index_row].qty);
+                    data_c[index_row].code = null
+                    onFocus.row = index_row;
+                    onFocus.cell = index_cell;
+
+                    await tick(); // tunggu DOM siap
+                    refs[index_row]?.[index_cell]?.focus();
+                    return
+                }
+                ;
+
+                data_c[index_row].name = dataByBarcode.name;
+                data_c[index_row].unit = dataByBarcode.type_unit;
+                data_c[index_row].price = dataByBarcode.price_sell;
+                data_c[index_row].total = parseNumber(dataByBarcode.price_sell) * parseNumber(data_c[index_row].qty);
 
                 total = parseNumber(data_c.reduce((acc, item) => acc + item.total, 0)).toLocaleString('id-ID', {
                     style: 'currency',
                     currency: 'IDR'
                 });
+
+                dataByBarcode = null
+                e.preventDefault();
+
+                onFocus.row = index_row + 1;
+                onFocus.cell = index_cell;
+
+                await tick(); // tunggu DOM siap
+                refs[index_row + 1]?.[index_cell]?.focus();
             }
         }
 
@@ -289,6 +338,8 @@
 											<input
 													bind:value={item[header.value]}
 													oninput={() =>(index_row = i) }
+													onkeydown={(e)=> keydown(e, i, hi)}
+
 													type="number"
 													id="visitors"
 													size="10"
@@ -332,7 +383,7 @@
 													placeholder=""
 													readonly
 											/>
-										{:else }
+										{:else if header['type'] === 'text'}
 											<input
 													bind:value={item[header.value]}
 													type="text"
@@ -342,6 +393,14 @@
 													placeholder=""
 													readonly
 											/>
+										{:else if header['type'] === 'parse-number'}
+											{parseNumber(item[header.value]).toLocaleString('id-ID', {
+                                                style: 'currency',
+                                                currency: 'IDR'
+                                            })}
+										{:else }
+											{item[header.value]}
+
 										{/if}
 									</th>
 								{/each}

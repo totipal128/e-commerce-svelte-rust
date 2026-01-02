@@ -35,8 +35,16 @@
         }, item)
     }
 
-    function handleRemove() {
-        dispatch('remove', {id: 1})
+    function handleDetail(id) {
+        dispatch('detail', {id: id})
+    }
+
+    function handleRemove(id) {
+        dispatch('remove', {id: id})
+    }
+
+    function handleUpdate(id) {
+        dispatch('update', {id: id, action: true})
     }
 </script>
 <div class="m-3">
@@ -79,18 +87,21 @@
 							{/each}
 
 							<td class="px-6 py-4">
-								<button type="button"
+								<button
+										onclick="{(e) => handleDetail(item.id)}"
+										type="button"
 										class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
 									<img src="/icon/search-alt.png" class="h-6 w-6 p-1 justify-center" alt="Tauri Logo"/>
 								</button>
 
 								<button
+										onclick="{(e) => handleUpdate(item.id)}"
 										type="button"
 										class=" w-10text-white bg-warning box-border border border-transparent hover:bg-warning-strong focus:ring-4 focus:ring-warning-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
 									<img src="/icon/pen-field.svg" class="h-6 w-6 p-1 justify-center" alt="Tauri Logo"/>
 								</button>
 
-								<button onclick="{handleRemove}" type="button"
+								<button onclick="{(e) => handleRemove(item.id)}" type="button"
 										class="text-white bg-danger box-border border border-transparent hover:bg-danger-strong focus:ring-4 focus:ring-danger-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
 									<img src="/icon/trash.svg" class="h-6 w-6 p-1 justify-center" alt="Tauri Logo"/>
 								</button>
