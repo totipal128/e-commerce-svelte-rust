@@ -1,13 +1,13 @@
 use crate::app::master_data::model::item_price::ItemPriceFind;
 use crate::app::master_data::model::items::{
-    ItemPrice, Items, ItemsCreate, ItemsDetail, ItemsFilter,
+    ItemPrice, Items, ItemsCreate, ItemsDetail, ItemsFilter, ItemsList,
 };
 use crate::app::master_data::repository::items_repo;
 use crate::base::database::postgres::orm::Pagination;
 use crate::base::responses::responses_struct::Responses;
 
 #[tauri::command]
-pub async fn items_get(filter: Option<ItemsFilter>) -> Result<Pagination<Items>, String> {
+pub async fn items_get(filter: Option<ItemsFilter>) -> Result<Pagination<ItemsList>, String> {
     items_repo::get_all_items(filter)
         .await
         .map_err(|e| e.to_string())

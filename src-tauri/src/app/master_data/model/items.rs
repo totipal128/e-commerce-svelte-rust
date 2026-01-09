@@ -2,6 +2,24 @@ use crate::base::database::postgres::orm::Model;
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+
+#[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
+pub struct ItemsList {
+    pub id: Option<i32>,
+    pub barcode: Option<String>,
+    pub name: Option<String>,
+    pub type_unit: Option<String>,
+    pub items_category_id: Option<i32>,
+    pub qty_stock: Option<i32>,
+    pub price_buy: Option<f64>,
+    pub price_sell: Option<f64>,
+    pub created_by: Option<DateTime<Local>>,
+    pub created_at: Option<DateTime<Local>>,
+}
+impl Model for ItemsList {
+    const TABLE: &'static str = "items";
+    const FIELDS_INSERT: &'static [&'static str] = &[];
+}
 #[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
 pub struct Items {
     pub id: Option<i32>,

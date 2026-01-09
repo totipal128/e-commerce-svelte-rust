@@ -3,7 +3,10 @@
 
     let subMenu = [
         // {label: 'Users', url: "/settings/users"},
-        {label: 'Users', url: $page.url.pathname + ""}
+        // {label: 'Pelanggan', url: $page.url.pathname + ""},
+        {label: 'Users', url: "/settings/users"},
+        {label: 'Pelanggan', url: "/settings/consumer"},
+        {label: 'Supplier', url: "/settings/supplier"}
     ]
 </script>
 

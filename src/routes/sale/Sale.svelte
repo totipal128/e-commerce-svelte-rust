@@ -223,7 +223,7 @@
 {/if}
 
 {#if open}
-	<div class="absolute h-full w-full bg-gray-300 z-10 top-0 left-0 p-3 " tabindex="0" onkeydown={(e)=> savekeydown(e)}>
+	<div class="absolute h-full w-full bg-gray-300 z-10 top-0 left-0 p-3 overflow-x-auto " tabindex="0" onkeydown={(e)=> savekeydown(e)}>
 		<div class="flex bg-gray-100  justify-center mb-2 rounded-2xl">
 			<p class="p-3 text-2xl"> Penjualan Barang </p>
 		</div>
@@ -282,36 +282,8 @@
 			</div>
 		</div>
 
-		<div class="flex justify-between">
 
-			<div class="">
-				<button onclick="{close}" type="button"
-						class=" p-3 m-5 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-					<div class="flex">
-						<img src="/icon/angle-double-small-left.svg" class="w-5 h-5" alt="back"/> Kembali (esc)
-					</div>
-				</button>
-				<button onclick="{refresh}" type="button"
-						class=" p-3 m-5 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-					<div class="flex">
-						<img src="/icon/refresh.svg" class="w-5 h-5 pr-2" alt="back"/> Refresh
-					</div>
-				</button>
-			</div>
-			<div class="order-last">
-				<button
-						class="p-3 m-5 text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-base text-sm px-4 py-2.5 text-center leading-5"
-						type="button"
-						onclick="{() => savekeydown('F8')}"
-				>
-					<p class="text-3xl">Simpan (F8)</p>
-				</button>
-
-			</div>
-		</div>
-
-
-		<div class="mr-5 w-full">
+		<div class="mr-5 w-full mt-5">
 			<div class="table-auto md:table-fixed  bg-white h-max p-3 rounded-lg">
 
 
@@ -343,7 +315,7 @@
 													type="number"
 													id="visitors"
 													size="10"
-													class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-2.5 py-2 shadow-xs placeholder:text-body"
+													class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-20 px-2.5 py-2 shadow-xs placeholder:text-body"
 													placeholder=""
 											/>
 										{:else if header['type'] === 'input-code'}
@@ -424,5 +396,34 @@
 
 			</div>
 		</div>
+
+		<div class="flex justify-between mt-3">
+
+			<div class="">
+				<button onclick="{close}" type="button"
+						class=" p-3 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
+					<div class="flex">
+						<img src="/icon/angle-double-small-left.svg" class="w-5 h-5" alt="back"/> Kembali (esc)
+					</div>
+				</button>
+				<button onclick="{refresh}" type="button"
+						class=" p-3 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
+					<div class="flex">
+						<img src="/icon/refresh.svg" class="w-5 h-5 pr-2" alt="back"/> Refresh
+					</div>
+				</button>
+			</div>
+			<div class="order-last">
+				<button
+						class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none"
+						type="button"
+						onclick="{() => savekeydown('F8')}"
+				>
+					<p class="text-sm">Simpan (F8)</p>
+				</button>
+
+			</div>
+		</div>
+
 	</div>
 {/if}

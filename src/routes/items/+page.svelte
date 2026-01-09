@@ -13,7 +13,8 @@
         {name: 'Nama Barang', value: 'name'},
         {name: 'Satuan', value: 'type_unit'},
         {name: 'Jumlah', value: 'qty_stock'},
-        {name: 'Harga', value: 'price.array.0.price_sell'},
+        {name: 'Harga Beli', value: 'price_buy', type_data: 'parse-number'},
+        {name: 'Harga Jual', value: 'price_sell', type_data: 'parse-number'},
     ]
     // let data = [
     //     {code: "abc-123", name: "handphone", unit: "pcs", qty: 100, price: 200000,}
@@ -113,7 +114,7 @@
 	<ModalRemove openRemove={removeIsOpen} id={idData} on:close={handlerRemove}/>
 {/if}
 
-<div class="w-full">
+<div class="w-full h-full">
 	{#if (loading)}
 		<div class="flex w-full h-[80vh] mt-3 rounded-2xl bg-white justify-center items-center">
 			<img src="/icon/gift/loading.gif" class="h-50 w-50 p-1 justify-center" alt="Tauri Logo"/>

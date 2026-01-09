@@ -38,6 +38,8 @@ pub struct QueryBuilderPostgrest<T> {
 
     update_set: Option<String>,
     update_one: bool,
+    debug: bool,
+    distinct: Option<String>,
 
     insert_field: Option<Vec<String>>,
     insert_value: Option<Vec<String>>,
@@ -61,6 +63,9 @@ where
             filter: None,
             update_set: None,
             update_one: false,
+
+            debug: false,
+            distinct: None,
 
             insert_field: None,
             insert_value: None,
@@ -284,6 +289,14 @@ where
         self.order_by = Some(format!("ORDER BY {} ", order));
         self
     }
+    pub fn distinct(mut self) -> Self {
+        self.distinct = Some(String::from("distinct"));
+        self
+    }
+    pub fn debug(mut self) -> Self {
+        self.debug = true;
+        self
+    }
     pub fn group(mut self, group: &str) -> Self {
         self.group_by = Some(format!("GROUP BY {} ", group));
         self
@@ -300,7 +313,8 @@ where
 
         // let query_str = "SELECT * FROM users";
         let query_str = format!(
-            "SELECT {} FROM {} {} {} {}",
+            "SELECT {} {} FROM {} {} {} {}",
+            self.distinct.as_deref().unwrap_or(""),
             self.select.as_deref().unwrap_or("*"),
             model,
             self.filter.as_deref().unwrap_or(""),
@@ -325,6 +339,11 @@ where
         self.join_filter();
 
         let model = self.model.as_deref().ok_or("Model tidak boleh kosong")?;
+        let mut select_count: Option<String> = None;
+
+        if !self.join.is_none() {
+            select_count = Some(format!("{}.*", model));
+        }
 
         // Ambil pool atau kembalikan error
         let pool = db_pool().await.map_err(|e| e.to_string())?;
@@ -334,8 +353,11 @@ where
 
         /* ================= COUNT QUERY ================= */
         let count_query = format!(
-            "SELECT COUNT(*) FROM {} {}",
+            "SELECT COUNT({} {}) FROM {} {} {}",
+            self.distinct.as_deref().unwrap_or(""),
+            select_count.as_deref().unwrap_or("*"),
             model,
+            self.join.as_deref().unwrap_or(""),
             self.filter.as_deref().unwrap_or("")
         );
 
@@ -348,15 +370,21 @@ where
 
         /* ================= DATA QUERY ================= */
         let data_query = format!(
-            "SELECT {} FROM {} {} {} {} LIMIT {} OFFSET {}",
+            "SELECT {} {} FROM {} {} {} {} {} LIMIT {} OFFSET {}",
+            self.distinct.as_deref().unwrap_or(""),
             self.select.as_deref().unwrap_or("*"),
             model,
+            self.join.as_deref().unwrap_or(""),
             self.filter.as_deref().unwrap_or(""),
             self.order_by.as_deref().unwrap_or(""),
             self.group_by.as_deref().unwrap_or(""),
             page_size,
             offset,
         );
+
+        if self.debug {
+            println!("{}", data_query);
+        }
 
         let results = sqlx::query_as::<_, T>(&data_query)
             .fetch_all(pool)
@@ -394,6 +422,10 @@ where
             self.group_by.as_deref().unwrap_or(""),
         );
 
+        if self.debug {
+            println!("{}", query_str);
+        }
+
         let result = sqlx::query_as::<_, T>(query_str.as_str())
             .fetch_one(pool) // pool sudah murni
             .await
@@ -421,6 +453,10 @@ where
                 .as_deref()
                 .unwrap_or(format!("ORDER BY id DESC ").as_str())
         );
+
+        if self.debug {
+            println!("{}", query_str);
+        }
 
         let result = sqlx::query_as::<_, T>(query_str.as_str())
             .fetch_one(pool) // pool sudah murni
@@ -517,6 +553,10 @@ where
             fields,
             values.join(", ") // params
         );
+
+        if self.debug {
+            println!("{}", sql);
+        }
 
         let pool = db_pool().await.map_err(|e| e.to_string())?;
 
@@ -622,6 +662,10 @@ where
                 cond.to_string(),
             );
 
+            if self.debug {
+                println!("{}", sql);
+            }
+
             let mut q = sqlx::query_as::<_, T>(&sql);
             result = q.fetch_one(pool).await.map_err(|e| e.to_string())?;
 
@@ -638,6 +682,10 @@ where
                 update_value.join(","),
                 cond.to_string(),
             );
+
+            if self.debug {
+                println!("{}", sql);
+            }
 
             let mut q = sqlx::query_as::<_, T>(&sql);
             result = q.fetch_one(pool).await.map_err(|e| e.to_string())?;

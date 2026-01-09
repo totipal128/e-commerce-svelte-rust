@@ -5,7 +5,7 @@ use serde::de::Unexpected::Str;
 #[tokio::test]
 async fn items_get() {
     let filter: ItemsFilter = ItemsFilter {
-        search: Some(String::from("test")),
+        search: Some(String::from("")),
         ..ItemsFilter::default()
     };
 

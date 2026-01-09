@@ -1,18 +1,20 @@
 use crate::app::master_data::model::item_price::ItemPriceFind;
 use crate::app::master_data::model::items::{
-    ItemPrice, Items, ItemsCreate, ItemsDetail, ItemsFilter,
+    ItemPrice, Items, ItemsCreate, ItemsDetail, ItemsFilter, ItemsList,
 };
 use crate::app::master_data::repository::item_price::{
     delete_item_price__by_item_id, get_items_price_by_item_id,
 };
-use crate::base::database::postgres::conn::db_pool;
 use crate::base::database::postgres::orm::{Pagination, QueryBuilderPostgrest};
-use sqlx::Postgres;
-use std::any::type_name;
-use std::fmt::format;
 
-pub async fn get_all_items(mut filter: Option<ItemsFilter>) -> Result<Pagination<Items>, String> {
-    let mut qs = QueryBuilderPostgrest::<Items>::new();
+pub async fn get_all_items(
+    mut filter: Option<ItemsFilter>,
+) -> Result<Pagination<ItemsList>, String> {
+    let mut qs = QueryBuilderPostgrest::<ItemsList>::new()
+        .select("items.*, ip.price_sell, ip.price_buy")
+        .join(
+            "left join items_price ip on items.id = ip.item_id AND items.type_unit = ip.type_unit",
+        );
 
     let (page, page_size) = match filter.as_mut() {
         Some(f) => (f.page.unwrap_or(1), f.page_size.unwrap_or(10)),

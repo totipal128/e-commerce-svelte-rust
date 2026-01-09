@@ -3,6 +3,11 @@
 
     const dispatch = createEventDispatcher();
 
+    function parseNumber(v) {
+        if (!v) return 0;
+        return Number(v.toString().replace(/\./g, ""));
+    };
+
     let {
 
         data = [
@@ -81,7 +86,14 @@
 									{#if header['value'].split(".").length > 1}
 										{getValue(item, header.value)}
 									{:else}
-										{item[header['value']]}
+										{#if header['type_data'] == "parse-number"}
+											{parseNumber(item[header.value]).toLocaleString('id-ID', {
+                                                style: 'currency',
+                                                currency: 'IDR'
+                                            })}
+										{:else}
+											{item[header['value']]}
+										{/if}
 									{/if}
 								</th>
 							{/each}

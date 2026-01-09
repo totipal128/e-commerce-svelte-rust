@@ -7,7 +7,7 @@
     import {onMount} from "svelte";
 
     let {
-        open = false,
+        openRemove = false,
         id = 0
     } = $props();
 
@@ -68,10 +68,10 @@
 
 </script>
 
-{#if open}
+{#if openRemove}
 	<!-- Overlay -->
 	<div
-			class="fixed inset-0 z-50 flex items-center justify-center z-2
+			class="fixed inset-0 z-50 flex items-center justify-center
            bg-black" style="opacity: 0.9"
 			on:click={closeModal}
 	>

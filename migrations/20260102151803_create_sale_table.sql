@@ -23,7 +23,7 @@ CREATE TABLE sale_items
     items_id    INTEGER REFERENCES items (id) ON DELETE SET NULL,
     items_name  VARCHAR(255) DEFAULT NULL,
     items_unit  VARCHAR(50)  DEFAULT NULL,
-    items_price VARCHAR(50)  DEFAULT NULL,
+    items_price FLOAT        DEFAULT 0,
     qty         INTEGER      DEFAULT 0,
 
     created_at  TIMESTAMPTZ  DEFAULT NOW(),
