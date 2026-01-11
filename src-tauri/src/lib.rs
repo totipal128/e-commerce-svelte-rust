@@ -20,7 +20,7 @@ pub fn run() {
             app::authentication::controller::users::create_users,
             app::authentication::controller::users::update_users,
             app::authentication::controller::users::delete_users,
-            //
+            // item
             app::master_data::controller::items::items_get,
             app::master_data::controller::items::get_items_by_id,
             app::master_data::controller::items::items_create,
@@ -28,6 +28,12 @@ pub fn run() {
             app::master_data::controller::items::items_delete,
             app::master_data::controller::items::get_items_by_barcode,
             app::master_data::controller::items::get_items_price__by_items_id,
+            //
+            app::master_data::controller::sale::sale_list,
+            app::master_data::controller::sale::sale_by_id,
+            app::master_data::controller::sale::sale_create,
+            app::master_data::controller::sale::sale_update,
+            app::master_data::controller::sale::sale_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

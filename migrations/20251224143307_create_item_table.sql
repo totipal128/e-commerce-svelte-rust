@@ -16,14 +16,14 @@ CREATE TABLE items
     barcode           VARCHAR(150) NOT NULL UNIQUE,
     name              TEXT         NOT NULL,
     items_category_id INTEGER      REFERENCES items_category (id) ON DELETE SET NULL,
-    type_unit         VARCHAR(50) DEFAULT 'PCS',
-    qty_stock         INTEGER     DEFAULT 0,
+    type_unit         VARCHAR(50)                                           DEFAULT 'PCS',
+    qty_stock         INTEGER                                               DEFAULT 0,
 
-    created_by        INTEGER,
+    created_by_id     INTEGER      REFERENCES users (id) ON DELETE SET NULL DEFAULT NULL,
 
-    created_at        TIMESTAMPTZ DEFAULT NOW(),
-    updated_at        TIMESTAMPTZ DEFAULT NOW(),
-    deleted_at        TIMESTAMPTZ DEFAULT NULL
+    created_at        TIMESTAMPTZ                                           DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ                                           DEFAULT NOW(),
+    deleted_at        TIMESTAMPTZ                                           DEFAULT NULL
 );
 
 -- 3. Buat tabel items_price

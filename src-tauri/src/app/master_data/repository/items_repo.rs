@@ -3,7 +3,7 @@ use crate::app::master_data::model::items::{
     ItemPrice, Items, ItemsCreate, ItemsDetail, ItemsFilter, ItemsList,
 };
 use crate::app::master_data::repository::item_price::{
-    delete_item_price__by_item_id, get_items_price_by_item_id,
+    create_items_price, delete_item_price__by_item_id, get_items_price_by_item_id,
 };
 use crate::base::database::postgres::orm::{Pagination, QueryBuilderPostgrest};
 
@@ -128,9 +128,13 @@ pub async fn update_item(item: ItemsDetail) -> Result<ItemsDetail, String> {
         qs = qs.set_i32("qty_stock", item.qty_stock.unwrap())
     }
 
-    if let Some(price) = &item.price {
-        for r in price {
-            if r.id.unwrap() < 1 {
+    if let Some(mut price) = item.price.clone() {
+        let mut k: usize = 0;
+        for r in price.iter_mut() {
+            k += 1;
+            if !r.id.is_some() {
+                r.item_id = item.id;
+                create_items_price(r, k);
                 continue;
             }
             let mut r_p = QueryBuilderPostgrest::<ItemPrice>::new();
@@ -187,13 +191,16 @@ pub async fn get_by_barcode(barcode: String) -> Result<ItemPriceFind, String> {
 
     let mut result = qs
         .model("items i")
-        .select("i.id, ip.barcode, i.name, i.items_category_id, ip.type_unit, ip.price_buy,ip.price_sell, i.qty_stock / ip.content as qty")
+        .select("i.id, ip.barcode, i.name, i.items_category_id, ip.type_unit, ip.price_buy,ip.price_sell, coalesce(i.qty_stock / NULLIF(ip.content, 0), 0) as qty")
         .join("left join items_price ip ON i.id = ip.item_id")
         .where_clause_str("ip.barcode", barcode.as_str())
         .find_one()
         .await
         .map_err(|e| e.to_string())?;
 
+    if result.qty.unwrap() < 1 {
+        return Err(String::from("Stok Kosong !!!"));
+    }
     Ok(result)
 }
 pub async fn get_by_items_id(items_id: i32) -> Result<Vec<ItemPriceFind>, String> {

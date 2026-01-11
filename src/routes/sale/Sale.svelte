@@ -9,17 +9,33 @@
 
     const dispatch = createEventDispatcher();
     let {
-        codeSale = "CODE-01",
         open = false,
-        data = [
-            {code: "", name: "", unit: "", price: 0, qty: 1, total: 0},
-        ]
-
-
     } = $props()
 
-    let dataByBarcode = $state(null)
-    let loading = $state(true)
+    let codeSale = "CODE-01";
+    let dataByBarcode = $state(null);
+    let loading = $state(true);
+    let result_data = $state({
+        code: null,
+        customer_id: null,
+        PPN: 0,
+        discount: 0,
+        total_item: 0,
+        total: 0,
+        change: 0,
+        payment: 0,
+        items: [
+            {
+                code: null,
+                items_id: null,
+                items_name: null,
+                items_unit: 0,
+                items_price: 0,
+                total: 0,
+                qty: 0
+            }
+        ],
+    });
 
     async function getByBarcodeDetail(barcode) {
         loading = true
@@ -40,9 +56,9 @@
 
     let headers = [
         {name: 'Code Barang', value: 'code', type: 'input-code'},
-        {name: 'Nama Barang', value: 'name', type: 'text1'},
-        {name: 'Satuan', value: 'unit', type: 'select1'},
-        {name: 'Harga', value: 'price', type: 'parse-number'},
+        {name: 'Nama Barang', value: 'items_name', type: 'text1'},
+        {name: 'Satuan', value: 'items_unit', type: 'select1'},
+        {name: 'Harga', value: 'items_price', type: 'parse-number'},
         {name: 'QTY', value: 'qty', type: 'input-number'},
         {name: 'Total', value: 'total', type: 'parse-number'},
     ];
@@ -52,11 +68,9 @@
         {name: "gt"},
         {name: "gt"},
     ]
-    let data_c = $state(structuredClone(data));
     let dateN = new Date();
     let total = $state(0);
     let index_row = $state(0);
-    let unitItem = $state("");
     let onFocus = {row: null, cell: null};
     let refs = [];
     let openModalAdd = $state(false)
@@ -79,7 +93,7 @@
     }
 
     function refresh() {
-        data_c = structuredClone(data);
+        result_data.items = structuredClone(data);
         total = 0
     }
 
@@ -89,12 +103,9 @@
     };
 
     function removeIndexTable(i) {
-        data_c.splice(i, 1);
+        result_data.items.splice(i, 1);
 
-        total = parseNumber(data_c.reduce((acc, item) => acc + item.total, 0)).toLocaleString('id-ID', {
-            style: 'currency',
-            currency: 'IDR'
-        });
+        total = result_data.items.reduce((acc, item) => acc + item.total, 0)
     }
 
     function selectUnitItem(e) {
@@ -108,6 +119,15 @@
 
     function savekeydown(e) {
         if (e.key === "F8" || e === "F8") {
+            if (total == 0) {
+                refs[0]?.[0]?.focus();
+                return;
+            }
+
+            result_data.total = total;
+            result_data.code = codeSale;
+            result_data.items = result_data.items;
+
             openModalAdd = !openModalAdd
             return;
         }
@@ -119,7 +139,7 @@
     }
 
 
-    async function keydown(e, r, c) {
+    async function keydown(e, r, c, type) {
         if (e.key === "Enter") {
             if (c === 4) {
                 e.preventDefault();
@@ -131,6 +151,19 @@
                 refs[r + 1]?.[0]?.focus();
             }
 
+            if (type === "qty") {
+                await getByBarcodeDetail(result_data.items[index_row].code)
+				
+                if (dataByBarcode.qty < result_data.items[index_row].qty) {
+                    result_data.items[index_row].qty = dataByBarcode.qty
+                }
+
+                result_data.items[index_row].total = parseNumber(result_data.items[index_row].items_price) * parseNumber(result_data.items[index_row].qty);
+                total = result_data.items.reduce((acc, item) => acc + item.total, 0);
+                result_data.total_item += result_data.items[index_row].qty;
+                return
+            }
+
             handleCodeInput(e, e.target.value, r, c)
         }
     }
@@ -138,7 +171,7 @@
     async function handleCodeInput(e, code, index_row, index_cell) {
         if (!code) return;
 
-        const dupIndex = data_c.findIndex(
+        const dupIndex = result_data.items.findIndex(
             (item, i) => item.code === code && i !== index_row
         );
 
@@ -146,41 +179,49 @@
 
         if (dupIndex !== -1) {
 
-            data_c[dupIndex].qty += 1;
-            data_c[dupIndex].total =
-                parseNumber(data_c[dupIndex].price) *
-                parseNumber(data_c[dupIndex].qty);
+            result_data.items[dupIndex].qty += 1;
+            result_data.items[dupIndex].total =
+                parseNumber(result_data.items[dupIndex].items_price) *
+                parseNumber(result_data.items[dupIndex].qty);
 
-            total = parseNumber(data_c.reduce((acc, item) => acc + item.total, 0)).toLocaleString('id-ID', {
-                style: 'currency',
-                currency: 'IDR'
-            });
+            total = result_data.items.reduce((acc, item) => acc + item.total, 0);
+
+            // result_data.total_item += result_data.items[index_row].qty
 
             // reset baris aktif
-            data_c[index_row] = {
+            result_data.items[index_row] = {
                 code: "",
-                name: "",
-                unit: "",
-                price: 0,
-                qty: 1,
-                total: 0
+                items_id: "",
+                items_name: "",
+                items_unit: 0,
+                items_price: 0,
+                total: 0,
+                qty: 0
             };
 
             return;
         } else {
-            if (data_c.length - 1 === index_row) {
-                data_c.push(
-                    {code: "", name: "", unit: "", price: 0, qty: 1, total: 0}
+            if (result_data.items.length - 1 === index_row) {
+                result_data.items.push(
+                    {
+                        code: "",
+                        items_id: "",
+                        items_name: "",
+                        items_unit: 0,
+                        items_price: 0,
+                        total: 0,
+                        qty: 0
+                    }
                 )
             }
 
             if (index_row !== null) {
-                await getByBarcodeDetail(data_c[index_row].code)
+                await getByBarcodeDetail(result_data.items[index_row].code)
 
                 if (dataByBarcode == null) {
                     e.preventDefault();
 
-                    data_c[index_row].code = null
+                    result_data.items[index_row].code = null
                     onFocus.row = index_row;
                     onFocus.cell = index_cell;
 
@@ -190,15 +231,16 @@
                 }
                 ;
 
-                data_c[index_row].name = dataByBarcode.name;
-                data_c[index_row].unit = dataByBarcode.type_unit;
-                data_c[index_row].price = dataByBarcode.price_sell;
-                data_c[index_row].total = parseNumber(dataByBarcode.price_sell) * parseNumber(data_c[index_row].qty);
+                result_data.items[index_row].items_id = dataByBarcode.name;
+                result_data.items[index_row].items_name = dataByBarcode.name;
+                result_data.items[index_row].items_unit = dataByBarcode.type_unit;
+                result_data.items[index_row].items_price = dataByBarcode.price_sell;
+                result_data.items[index_row].qty = 1;
+                result_data.items[index_row].total = parseNumber(dataByBarcode.price_sell) * parseNumber(result_data.items[index_row].qty);
 
-                total = parseNumber(data_c.reduce((acc, item) => acc + item.total, 0)).toLocaleString('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR'
-                });
+                result_data.total_item += result_data.items[index_row].qty
+
+                total = result_data.items.reduce((acc, item) => acc + item.total, 0);
 
                 dataByBarcode = null
                 e.preventDefault();
@@ -215,11 +257,15 @@
     }
 
 
-    $effect(() => {
+    $effect(async () => {
+        if (open) {
+            await tick();
+            refs[0]?.[0]?.focus();
+        }
     })
 </script>
 {#if openModalAdd}
-	<ModalAdd open={openModalAdd} on:close={() => savekeydown("F8")}/>
+	<ModalAdd open={openModalAdd} total_price={total} data_sale={result_data} on:close={() => savekeydown("F8")}/>
 {/if}
 
 {#if open}
@@ -278,15 +324,16 @@
 
 			<div class="flex w-250 rounded-sm h-20 items-center pt-2 pl-20 mt-15 font-30" style="font-size: 50px">
 				<p class="">Total : </p>
-				<p class=""> {total}</p>
+				<p class=""> {parseNumber(total).toLocaleString('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR'
+                })}</p>
 			</div>
 		</div>
 
 
 		<div class="mr-5 w-full mt-5">
 			<div class="table-auto md:table-fixed  bg-white h-max p-3 rounded-lg">
-
-
 				<div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default h-[65vh] overflow-y-auto">
 					<table class="w-full text-sm text-left rtl:text-right text-body">
 						<thead class="bg-neutral-secondary-soft border-b border-default sticky top-0">
@@ -302,7 +349,7 @@
 						</tr>
 						</thead>
 						<tbody>
-						{#each data_c as item, i (i)}
+						{#each result_data.items as item, i (i)}
 							<tr class="odd:bg-neutral-primary  border-b border-default">
 								{#each headers as header, hi (hi)}
 									<th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap">
@@ -310,7 +357,7 @@
 											<input
 													bind:value={item[header.value]}
 													oninput={() =>(index_row = i) }
-													onkeydown={(e)=> keydown(e, i, hi)}
+													onkeydown={(e)=> keydown(e, i, hi, "qty")}
 
 													type="number"
 													id="visitors"
@@ -409,18 +456,30 @@
 				<button onclick="{refresh}" type="button"
 						class=" p-3 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
 					<div class="flex">
-						<img src="/icon/refresh.svg" class="w-5 h-5 pr-2" alt="back"/> Refresh
+						<img src="/icon/refresh.svg" class="w-5 h-5 pr-2" alt="back"/> Reset
 					</div>
 				</button>
 			</div>
 			<div class="order-last">
-				<button
-						class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none"
-						type="button"
-						onclick="{() => savekeydown('F8')}"
-				>
-					<p class="text-sm">Simpan (F8)</p>
-				</button>
+
+				{#if total == 0}
+					<button
+							class="text-white legend-mouseover-inactive bg-gray-500 box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none"
+							type="button"
+							onclick="{() => savekeydown('F8')}"
+							disabled
+					>
+						<p class="text-sm">Simpan (F8)</p>
+					</button>
+				{:else }
+					<button
+							class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none"
+							type="button"
+							onclick="{() => savekeydown('F8')}"
+					>
+						<p class="text-sm">Simpan (F8)</p>
+					</button>
+				{/if}
 
 			</div>
 		</div>

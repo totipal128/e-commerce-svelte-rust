@@ -13,7 +13,9 @@ pub struct Sale {
     pub discount: Option<f64>,
     pub total_item: Option<i32>,
     pub total: Option<f64>,
-    pub created_by: Option<i32>,
+    pub change: Option<f64>,
+    pub payment: Option<f64>,
+    pub created_by_id: Option<i32>,
 }
 
 impl Model for Sale {
@@ -32,7 +34,10 @@ pub struct SaleDetail {
     pub discount: Option<f64>,
     pub total_item: Option<i32>,
     pub total: Option<f64>,
-    pub created_by: Option<i32>,
+    pub change: Option<f64>,
+    pub payment: Option<f64>,
+
+    pub created_by_id: Option<i32>,
 
     #[sqlx(skip)]
     pub items: Option<Vec<SaleItem>>,
@@ -52,6 +57,7 @@ pub struct SaleItem {
     pub items_name: Option<String>,
     pub items_unit: Option<String>,
     pub items_price: Option<f64>,
+    pub total: Option<f64>,
     pub qty: Option<i32>,
 }
 

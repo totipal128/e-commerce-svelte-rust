@@ -13,7 +13,7 @@ pub struct ItemsList {
     pub qty_stock: Option<i32>,
     pub price_buy: Option<f64>,
     pub price_sell: Option<f64>,
-    pub created_by: Option<DateTime<Local>>,
+    pub created_by_id: Option<i32>,
     pub created_at: Option<DateTime<Local>>,
 }
 impl Model for ItemsList {
@@ -28,7 +28,7 @@ pub struct Items {
     pub type_unit: Option<String>,
     pub items_category_id: Option<i32>,
     pub qty_stock: Option<i32>,
-    pub created_by: Option<DateTime<Local>>,
+    pub created_by_id: Option<i32>,
     pub created_at: Option<DateTime<Local>>,
 }
 impl Model for Items {
@@ -61,7 +61,7 @@ pub struct ItemsDetail {
     pub type_unit: Option<String>,
     pub items_category_id: Option<i32>,
     pub qty_stock: Option<i32>,
-    pub created_by: Option<DateTime<Utc>>,
+    pub created_by_id: Option<i32>,
     pub created_at: Option<DateTime<Utc>>,
 
     #[sqlx(skip)]
