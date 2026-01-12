@@ -9,7 +9,7 @@ pub struct Sale {
     pub id: Option<i32>,
     pub code: Option<String>,
     pub customer_id: Option<i32>,
-    pub PPN: Option<f64>,
+    pub ppn: Option<f64>,
     pub discount: Option<f64>,
     pub total_item: Option<i32>,
     pub total: Option<f64>,
@@ -30,7 +30,7 @@ pub struct SaleDetail {
 
     pub customer_id: Option<i32>,
 
-    pub PPN: Option<f64>,
+    pub ppn: Option<f64>,
     pub discount: Option<f64>,
     pub total_item: Option<i32>,
     pub total: Option<f64>,

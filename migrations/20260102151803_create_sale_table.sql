@@ -4,7 +4,7 @@ CREATE TABLE sale
     id            SERIAL PRIMARY KEY,
     code          VARCHAR(50)                                         DEFAULT NULL,
     customer_id   INTEGER REFERENCES customer (id) ON DELETE SET NULL DEFAULT NULL,
-    PPN           FLOAT                                               DEFAULT 0,
+    ppn           FLOAT                                               DEFAULT 0,
     discount      FLOAT                                               DEFAULT 0,
     total_item    INTEGER                                             DEFAULT 0,
     total         FLOAT                                               DEFAULT 0,

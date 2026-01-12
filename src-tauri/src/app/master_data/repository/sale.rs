@@ -44,8 +44,8 @@ pub async fn create_sale(mut data: SaleDetail) -> Result<Sale, String> {
     if data.customer_id.is_some() {
         qs = qs.insert_i32("customer_id", data.customer_id.unwrap());
     }
-    if data.PPN.is_some() {
-        qs = qs.insert_f64("PPN", data.PPN.unwrap());
+    if data.ppn.is_some() {
+        qs = qs.insert_f64("ppn", data.ppn.unwrap());
     }
     if data.discount.is_some() {
         qs = qs.insert_f64("discount", data.discount.unwrap());
@@ -70,6 +70,10 @@ pub async fn create_sale(mut data: SaleDetail) -> Result<Sale, String> {
 
     if let Some(items) = &mut data.items {
         for i in items.iter_mut() {
+            if !i.items_id.is_some() {
+                continue;
+            }
+
             i.sale_id = result.id;
             create__sale_item(i).await.map_err(|e| e.to_string())?;
         }
@@ -91,8 +95,8 @@ pub async fn update_sale(data: SaleDetail) -> Result<Sale, String> {
     if data.customer_id.is_some() {
         qs = qs.set_i32("customer_id", data.customer_id.unwrap());
     }
-    if data.PPN.is_some() {
-        qs = qs.set_f64("PPN", data.PPN.unwrap());
+    if data.ppn.is_some() {
+        qs = qs.set_f64("ppn", data.ppn.unwrap());
     }
     if data.discount.is_some() {
         qs = qs.set_f64("discount", data.discount.unwrap());
@@ -168,8 +172,10 @@ pub async fn get_by_sale_id__sale_items(sale_id: i32) -> Result<Vec<SaleItem>, S
     Ok(result)
 }
 
-pub async fn create__sale_item(data: &SaleItem) -> Result<Sale, String> {
-    let mut qs = QueryBuilderPostgrest::<Sale>::new();
+pub async fn create__sale_item(data: &SaleItem) -> Result<SaleItem, String> {
+    let mut qs = QueryBuilderPostgrest::<SaleItem>::new();
+
+    println!("sale create{:?}", data);
 
     if data.sale_id.is_some() {
         qs = qs.insert_i32("sale_id", data.sale_id.unwrap());
@@ -193,16 +199,16 @@ pub async fn create__sale_item(data: &SaleItem) -> Result<Sale, String> {
         qs = qs.insert_i32("qty", data.qty.unwrap())
     }
 
-    let result = qs.create().await.map_err(|e| e.to_string())?;
+    let mut result = qs.create().await.map_err(|e| e.to_string())?;
 
     Ok(result)
 }
-pub async fn update__sale_item(data: &SaleItem) -> Result<Sale, String> {
+pub async fn update__sale_item(data: &SaleItem) -> Result<SaleItem, String> {
     if !data.id.is_some() {
         return Err(String::from("Item ID missing"));
     }
 
-    let mut qs = QueryBuilderPostgrest::<Sale>::new();
+    let mut qs = QueryBuilderPostgrest::<SaleItem>::new();
 
     if data.sale_id.is_some() {
         qs = qs.set_i32("sale_id", data.sale_id.unwrap());
