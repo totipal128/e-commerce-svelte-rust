@@ -43,7 +43,7 @@
             })
 
             itemsData = result.data
-			
+
         } catch (err) {
             console.log("err", err)
         } finally {

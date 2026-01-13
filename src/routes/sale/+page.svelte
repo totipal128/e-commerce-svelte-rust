@@ -9,11 +9,12 @@
     import Table from '$lib/component/table/Table.svelte'
 
     const headers = [
-        {name: 'Code', value: 'barcode'},
-        {name: 'Nama Barang', value: 'name'},
-        {name: 'Satuan', value: 'type_unit'},
-        {name: 'Jumlah', value: 'qty_stock'},
-        {name: 'Harga', value: 'price.array.0.price_sell'},
+        {name: 'Tanggal', value: 'created_at', type_data: "date"},
+        {name: 'Code', value: 'code'},
+        {name: 'Konsumen', value: 'costumer'},
+        {name: 'Total', value: 'total', type_data: "parse-number"},
+        {name: 'Pembayaran', value: 'payment', type_data: "parse-number"},
+        {name: 'Kembalian', value: 'change', type_data: "parse-number"},
     ]
     // let data = [
     //     {code: "abc-123", name: "handphone", unit: "pcs", qty: 100, price: 200000,}
@@ -37,7 +38,7 @@
     async function fetchData() {
         loading = true
         try {
-            const result = await invoke("items_get", {
+            const result = await invoke("sale_list", {
                 filter: {
                     search: searchDb,
                 }
@@ -103,7 +104,7 @@
 	<ModalAdd open={openModalAdd} on:close={handlerAdd}/>
 {/if}
 {#if openModalDetail}
-	<ModalDetail open={openModalDetail} id={idData} on:close={handlerDetail}/>
+	<ModalDetail id={idData} on:close={handlerDetail}/>
 {/if}
 {#if openModalUpdate}
 	<ModalUpdate id={idData} open={openModalUpdate} on:close={handlerUpdate}/>

@@ -1,5 +1,6 @@
 use crate::base::database::postgres::orm::Model;
 use chrono::format::Item;
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -16,6 +17,8 @@ pub struct Sale {
     pub change: Option<f64>,
     pub payment: Option<f64>,
     pub created_by_id: Option<i32>,
+
+    pub created_at: Option<DateTime<Local>>,
 }
 
 impl Model for Sale {

@@ -17,6 +17,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "apexcharts": "^3.46.0",
+    "date-fns": "^4.1.0",
     "flowbite": "^4.0.1"
   },
   "devDependencies": {

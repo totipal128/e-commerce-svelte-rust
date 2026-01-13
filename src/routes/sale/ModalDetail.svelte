@@ -1,167 +1,194 @@
 <script>
-    import {createEventDispatcher} from 'svelte';
+    import {createEventDispatcher, onMount, tick} from 'svelte';
+    import {invoke} from "@tauri-apps/api/core";
 
     const dispatch = createEventDispatcher();
-
-    import {invoke} from "@tauri-apps/api/core";
-    import {onMount} from "svelte";
-
+    let relationItems = [];
+    let loading = $state(false);
+    let get_detail_data = $state(
+        {
+            code: null,
+            customer_id: null,
+            PPN: 0,
+            discount: 0,
+            total_item: 0,
+            total: 0,
+            change: 0,
+            payment: null,
+            items: [
+                {
+                    code: null,
+                    items_id: null,
+                    items_name: null,
+                    items_unit: 0,
+                    items_price: 0,
+                    total: 0,
+                    qty: 0
+                }
+            ],
+        },
+    );
     let {
-        open = false,
         id = 0
-    } = $props();
+    } = $props()
 
-    let detailData = $state(null)
-
-    let loading = $state(true)
-    let priceItem = {
-        barcode: "",
-        unit: "",
-        parent_type_unit: "",
-        price_buy: 0,
-        price_sell: 0,
-        content: 0,
-    }
-    let itemsData = $state({
-        barcode: "",
-        name: "",
-        type_unit: 0,
-        items_category_id: null,
-        qty_stock: 0,
-        price: [
-            priceItem
-        ],
-
-    })
-
-
-    async function dataDetail() {
+    async function detail_data() {
         loading = true
         try {
-            const result = await invoke("get_items_by_id", {
+            const result = await invoke("sale_by_id", {
                 id: id
             })
 
-            itemsData = result.data
-			
+            get_detail_data = result.data;
+            console.log(get_detail_data);
+
         } catch (err) {
             console.log("err", err)
         } finally {
             loading = false;
+            console.log("Berhasil mengambil data")
         }
 
     }
 
-    //
-    onMount(dataDetail)
+    onMount(detail_data)
 
-    function closeModal() {
-        dispatch('close');
+    function parseNumber(v) {
+        if (!v) return 0;
+        return Number(v.toString().replace(/\./g, ""));
+    };
+
+    function handlerClose() {
+        dispatch("close", false);
     }
-
 </script>
 
-{#if open}
-	<!-- Overlay -->
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black" style="opacity: 0.9" on:click={closeModal}>
-		<!-- Modal -->
-		<div class="relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
-			<!-- Close button -->
-			<button on:click={closeModal} class="absolute top-3 right-3 text-body hover:bg-neutral-tertiary rounded-base w-9 h-9 flex items-center justify-center">
-				✕
+<div class="absolute bg-black w-screen h-screen z-11 top-0" style="opacity: 0.95">
+</div>
+<div class="absolute inset-0 flex items-center justify-center z-[11] " on:click={handlerClose}>
+	<div class=" bg-white min-w-200  rounded-2xl" on:click|stopPropagation>
+		<div class="relative flex items-center justify-center py-6 ">
+			<span class="text-3xl font-semibold">Detail Data</span>
+
+			<button
+					on:click={handlerClose}
+					class="absolute right-4 top-4 hover:bg-gray-200 p-3 rounded-full"
+			>
+				X
 			</button>
+		</div>
 
-			<!-- Content -->
-			<div class="relative h-full">
-				<!--				<svg class="mx-auto mb-4 text-fg-disabled w-12 h-12" viewBox="0 0 24 24" fill="none">-->
-				<!--					<path stroke="currentColor" stroke-width="2"-->
-				<!--						  d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0Z"/>-->
-
-				<!--				</svg>-->
-
-				<div class="mx-auto mb-4 text-fg text-2xl text-center w-50 h-12">
-					Detail Data
-
-					<div class="h-[2px] bg-gray-400 my-2"></div>
-
-				</div>
-
-
-			</div>
-
+		<!-- CONTENT -->
+		<div class="p-3 text-2xl">
 			<table class="p-3">
 				<tbody>
 				<tr class="p-2">
-					<td class="p-3">Barcode</td>
+					<td class="p-3">Kode Penjualan</td>
 					<td>:</td>
-					<td class="p-3">{itemsData.barcode}</td>
+					<td class="p-3">{get_detail_data.code}</td>
 				</tr>
 				<tr class="p-2">
-					<td class="p-3">Nama Barang</td>
+					<td class="p-3">Kostomer</td>
 					<td>:</td>
-					<td class="p-3">{itemsData.name}</td>
+					<td class="p-3">Example</td>
 				</tr>
 				<tr class="p-2">
-					<td class="p-3">Jumlah</td>
+					<td class="p-3">Total</td>
 					<td>:</td>
-					<td class="p-3">{itemsData.qty_stock}</td>
+					<td class="p-3">{
+                        parseNumber(get_detail_data.total).toLocaleString('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR'
+                        })}</td>
+				</tr>
+				<tr class="p-2">
+					<td class="p-3">Pembayaran</td>
+					<td>:</td>
+					<td class="p-3">{
+                        parseNumber(get_detail_data.payment).toLocaleString('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR'
+                        })}</td>
+				</tr>
+				<tr class="p-2">
+					<td class="p-3">Kembalian</td>
+					<td>:</td>
+					<td class="p-3">{
+                        parseNumber(get_detail_data.change).toLocaleString('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR'
+                        })}</td>
 				</tr>
 				</tbody>
 			</table>
+			<hr style="border: 1px solid #ccc;">
 
-			<div class="pl-3 pt-7">
-				Advanced Detail
-				<table class="relative text-sm text-left rtl:text-right text-body">
-					<thead class="sticky top-0 text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
-					<tr>
-						<th scope="col" class="px-6 py-3 font-medium">
-							Barcode
-						</th>
-						<th scope="col" class="px-6 py-3 font-medium">
-							Satuan Barang
-						</th>
-						<th scope="col" class="px-6 py-3 font-medium">
-							Induk Satuan Barang
-						</th>
-						<th scope="col" class="px-6 py-3 font-medium">
-							Harga Beli
-						</th>
-						<th scope="col" class="px-6 py-3 font-medium">
-							Harga Jual
-						</th>
-						<th scope="col" class="px-6 py-3 font-medium">
-							Isi
-						</th>
-					</tr>
-					</thead>
-					<tbody>
-					{#each itemsData.price as price, index}
-						<tr class="bg-neutral-primary border-b border-default">
-							<th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap">
-								{price.barcode}
+
+			<div class="pl-3 pt-7 min-h-50">
+				<!--				<p class="text-lg mb-3">List Barang </p>-->
+				<div class="flex justify-center">
+					<table class="relative text-sm text-left rtl:text-right text-body w-full">
+						<thead class="sticky top-0 text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
+						<tr>
+							<th scope="col" class="px-6 py-3 font-medium">
+								Nama Barang
 							</th>
-							<td class="px-6 py-4">
-								{price.type_unit}
-							</td>
-							<td>
-								{price.parent_type_unit}
-							</td>
-
-							<td class="px-6 py-4">
-								{price.price_buy}
-							</td>
-							<td class="px-6 py-4">
-								{price.price_buy}
-							</td>
-							<td class="px-6 py-4">
-								{price.content}
-							</td>
+							<th scope="col" class="px-6 py-3 font-medium">
+								Satuan Barang
+							</th>
+							<th scope="col" class="px-6 py-3 font-medium">
+								Harga
+							</th>
+							<th scope="col" class="px-6 py-3 font-medium">
+								Jumlah
+							</th>
+							<th scope="col" class="px-6 py-3 font-medium">
+								Total
+							</th>
 						</tr>
-					{/each}
+						</thead>
+						<tbody>
+						{#each get_detail_data.items as i, index}
+							<tr class="bg-neutral-primary border-b border-default">
+								<td class="px-6 py-4">
+									{i.items_name}
+								</td>
+								<td class="px-6 py-4">
+									{i.items_unit}
+								</td>
+								<td class="px-6 py-4">
+									{parseNumber(i.items_price).toLocaleString('id-ID', {
+                                        style: 'currency',
+                                        currency: 'IDR'
+                                    })}
+								</td>
+								<td class="px-6 py-4">
+									{i.qty}
+								</td>
+								<td class="px-6 py-4">
+									{parseNumber(i.total).toLocaleString('id-ID', {
+                                        style: 'currency',
+                                        currency: 'IDR'
+                                    })}
+								</td>
+							</tr>
+						{/each}
 
-					</tbody>
-				</table>
+						</tbody>
+					</table>
+				</div>
+
 			</div>
 		</div>
+
+		<!-- FOOTER -->
+		<div class=" p-4 flex justify-center gap-3">
+			<button
+					on:click={handlerClose}
+					class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+			>
+				Close
+			</button>
+		</div>
 	</div>
-{/if}
+</div>
