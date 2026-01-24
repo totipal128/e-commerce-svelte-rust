@@ -73,7 +73,7 @@
            bg-black" style="opacity: 0.9"
 			on:click={closeModal}
 	>
-		<!-- Modal -->
+		<!-- ModalCreate -->
 		<div
 				class="relative bg-neutral-primary-soft border border-default
              rounded-base shadow-sm p-4 md:p-6 w-full max-w-md"

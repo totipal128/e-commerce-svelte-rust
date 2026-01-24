@@ -12,6 +12,9 @@ pub async fn get_list_sale(mut filter: Option<Filter>) -> Result<Pagination<Sale
     };
 
     Ok(qs
+        .select("sale.*, c.name as consumer")
+        .join("left join customer c on c.id = sale.customer_id")
+        .debug()
         .find_by_pagination(page, page_size)
         .await
         .map_err(|e| e.to_string())?)
@@ -164,6 +167,8 @@ pub async fn get_by_sale_id__sale_items(sale_id: i32) -> Result<Vec<SaleItem>, S
     let mut qs = QueryBuilderPostgrest::<SaleItem>::new();
 
     let mut result = qs
+        .select("sale_items.*, items.code")
+        .join("LEFT JOIN items ON items.id = sale_items.items_id")
         .where_clause_i32("sale_id", sale_id)
         .find_all()
         .await

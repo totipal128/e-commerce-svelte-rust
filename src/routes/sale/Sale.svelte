@@ -12,6 +12,22 @@
         open = false,
     } = $props()
 
+	let listDataConsumer = $state([])
+	async function fetchListConsumer() {
+        try {
+			let result = await invoke("consumer_list")
+			listDataConsumer = result.results
+        }
+        catch(err) {
+            console.error(err)
+		}
+        finally {
+			loading = false
+        }
+    }
+
+    onMount(fetchListConsumer)
+
     let width = window.innerWidth;
     let height = window.innerHeight;
     let height35 = (height*0.3)+(height*0.05);
@@ -150,6 +166,8 @@
             result_data.total = result_data.total;
             result_data.code = codeSale;
             result_data.items = result_data.items;
+
+            console.log(result_data)
 
             openModalAdd = !openModalAdd
             return;
@@ -317,17 +335,20 @@
 					</td>
 				</tr>
 				<tr class="border-b border-default-medium">
-					<td class="p-2">Consumer</td>
+					<td class="p-2">Pelanggan</td>
 					<td class="p-2">:</td>
 					<td class="p-2">
 						<select
+								bind:value={result_data.customer_id}
 								id="small"
 								class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body mb-4">
 							<option selected>Choose a country</option>
-							<option value="US">United States</option>
-							<option value="CA">Canada</option>
-							<option value="FR">France</option>
-							<option value="DE">Germany</option>
+							{#each listDataConsumer as elm }
+								<option value="{elm.id}">{elm.name}</option>
+							{/each}
+<!--							<option value="CA">Canada</option>-->
+<!--							<option value="FR">France</option>-->
+<!--							<option value="DE">Germany</option>-->
 						</select>
 					</td>
 				</tr>

@@ -10,6 +10,7 @@ pub struct Sale {
     pub id: Option<i32>,
     pub code: Option<String>,
     pub customer_id: Option<i32>,
+    pub consumer: Option<String>,
     pub ppn: Option<f64>,
     pub discount: Option<f64>,
     pub total_item: Option<i32>,
@@ -55,6 +56,7 @@ impl Model for SaleDetail {
 #[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
 pub struct SaleItem {
     pub id: Option<i32>,
+    pub code: Option<String>,
     pub sale_id: Option<i32>,
     pub items_id: Option<i32>,
     pub items_name: Option<String>,

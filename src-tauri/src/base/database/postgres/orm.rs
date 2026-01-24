@@ -313,14 +313,19 @@ where
 
         // let query_str = "SELECT * FROM users";
         let query_str = format!(
-            "SELECT {} {} FROM {} {} {} {}",
+            "SELECT {} {} FROM {} {} {} {} {}",
             self.distinct.as_deref().unwrap_or(""),
             self.select.as_deref().unwrap_or("*"),
             model,
+            self.join.as_deref().unwrap_or(""),
             self.filter.as_deref().unwrap_or(""),
             self.order_by.as_deref().unwrap_or(""),
             self.group_by.as_deref().unwrap_or(""),
         );
+
+        if self.debug {
+            println!("query: {}", query_str);
+        }
 
         let result = sqlx::query_as::<_, T>(query_str.as_str())
             .fetch_all(pool) // pool sudah murni

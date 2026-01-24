@@ -34,6 +34,18 @@ pub fn run() {
             app::master_data::controller::sale::sale_create,
             app::master_data::controller::sale::sale_update,
             app::master_data::controller::sale::sale_delete,
+            //
+            app::master_data::controller::consumer::consumer_list,
+            app::master_data::controller::consumer::consumer_by_id,
+            app::master_data::controller::consumer::consumer_create,
+            app::master_data::controller::consumer::consumer_update,
+            app::master_data::controller::consumer::consumer_delete,
+            //
+            app::master_data::controller::supplier::supplier_list,
+            app::master_data::controller::supplier::supplier_by_id,
+            app::master_data::controller::supplier::supplier_create,
+            app::master_data::controller::supplier::supplier_update,
+            app::master_data::controller::supplier::supplier_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

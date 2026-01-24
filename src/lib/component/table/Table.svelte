@@ -1,24 +1,21 @@
 <script>
     import {createEventDispatcher} from 'svelte';
     import {FormatDate} from '$lib/helpers/formated_date.ts';
-    import {FormatCurrency} from '$lib/helpers/parse_number_format_currency.ts';
+    import {formatCurrencyIDR} from '$lib/helpers/parse_number_format_currency.ts';
 
     const dispatch = createEventDispatcher();
 
     let {
 
         data = [
-            {name: 'John', age: 25},
-            {name: 'John dasdsadsadsads', age: 26},
-            {name: 'John', age: 27},
-            {name: 'John', age: 28},
-            {name: 'John', age: 29},
-            {name: 'John', age: 30},
+            {name: 'John', age: 25, tabungan: 25000, date: "date"},
         ],
 
         headers = [
             {name: 'Name', value: 'name'},
-            {name: 'Age', value: 'age'}
+            {name: 'Age', value: 'age'},
+            // {name: 'Tabungan', value: "tabungan", type_data: 'parseIDR'},
+            // {name: 'Date', value: 'date', type_data: 'date'}
         ]
 
     } = $props()
@@ -41,8 +38,8 @@
         dispatch('detail', {id: id})
     }
 
-    function handleRemove(id) {
-        dispatch('remove', {id: id})
+    function handleRemove(id, title) {
+        dispatch('remove', {id: id, title: title})
     }
 
     function handleUpdate(id) {
@@ -83,8 +80,9 @@
 									{#if header['value'].split(".").length > 1}
 										{getValue(item, header.value)}
 									{:else}
-										{#if header['type_data'] == "parse-number"}
-											{FormatCurrency(item[header.value])}
+										{#if header['type_data'] == "parseIDR"}
+											{formatCurrencyIDR(item[header.value])}
+											<!--											hello-->
 										{:else if header['type_data'] == "date"}
 											{FormatDate(item[header.value])}
 										{:else}

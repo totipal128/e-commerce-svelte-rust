@@ -78,7 +78,7 @@ impl Model for ItemsDetail {
     ];
 }
 
-// Create
+// ModalCreate
 #[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
 pub struct ItemsCreate {
     pub barcode: Option<String>,

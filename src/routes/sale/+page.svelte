@@ -1,32 +1,33 @@
 <script>
     import {invoke} from "@tauri-apps/api/core";
     import {onMount} from "svelte";
-    import ModalRemove from "./ModalRemove.svelte"
-    import ModalAdd from "./Sale.svelte"
-    import ModalUpdate from "./ModalUpdate.svelte"
-    import ModalDetail from "./ModalDetail.svelte"
+    import Table from "$lib/component/table/Table.svelte";
+    import Sale from './Sale.svelte';
+    import ModalUpdate from './ModalUpdate.svelte';
+    import ModalRemove from './ModalRemove.svelte';
+    import ModalDetail from './ModalDetail.svelte';
 
-    import Table from '$lib/component/table/Table.svelte'
+    let data = $state([]);
+    let loading = $state(true);
+    let searchDb = $state("")
+    let searchDb_1 = $state("")
 
-    const headers = [
-        {name: 'Tanggal', value: 'created_at', type_data: "date"},
-        {name: 'Code', value: 'code'},
-        {name: 'Konsumen', value: 'costumer'},
-        {name: 'Total', value: 'total', type_data: "parse-number"},
-        {name: 'Pembayaran', value: 'payment', type_data: "parse-number"},
-        {name: 'Kembalian', value: 'change', type_data: "parse-number"},
+    let headerTable = [
+        {name: 'Tanggal Transaksi', value: 'created_at', type_data: 'date'},
+        {name: 'Kode Transaksi', value: 'code'},
+        {name: 'Pelanggan', value: 'consumer'},
+        {name: 'Total', value: 'total', type_data: 'parseIDR'},
+        {name: 'Jumlah Bayar', value: 'payment', type_data: 'parseIDR'},
+        {name: 'Kembalian', value: 'change', type_data: 'parseIDR'},
     ]
-    // let data = [
-    //     {code: "abc-123", name: "handphone", unit: "pcs", qty: 100, price: 200000,}
-    // ]
-    let loading = $state(true)
-    let data = $state([])
-    let searchDb = $state(null)
 
     function search(e) {
         // e.preventDefault();
+        // console.log(e.preventDefault())
         if (e.key === "Enter" || e === "enter") {
             if (e === "enter") {
+                searchDb = searchDb_1
+
                 fetchData()
             } else {
                 searchDb = e.target.value
@@ -45,9 +46,8 @@
             })
 
             data = result.results
-
         } catch (err) {
-            console.log("err", err)
+            console.log(err)
         } finally {
             loading = false;
         }
@@ -57,64 +57,64 @@
     onMount(fetchData)
 
     let idData = $state(0)
-    let openModalDetail = $state(false)
+    let titleData = $state("")
     let openModalAdd = $state(false)
+    let openModalDetail = $state(false)
     let openModalUpdate = $state(false)
-    let removeIsOpen = $state(false)
+    let openModalRemove = $state(false)
 
-    function handlerRemove(e) {
-        removeIsOpen = !removeIsOpen
-
-        if (e.detail !== null) {
-            idData = e.detail.id
-            fetchData()
-        }
-    }
-
-    function handlerAdd(e) {
+    function handlerAdd() {
         openModalAdd = !openModalAdd
-
-        if (e.detail !== null) {
-            idData = e.detail.id
-            fetchData()
-        }
+        fetchData()
+        loading = false;
     }
 
     function handlerDetail(e) {
         openModalDetail = !openModalDetail
-        if (e.detail !== null) {
+        if (e.detail != null) {
             idData = e.detail.id
-        } else {
-            fetchData()
         }
+        fetchData()
+        loading = false;
     }
 
     function handlerUpdate(e) {
         openModalUpdate = !openModalUpdate
-        if (e.detail !== null) {
+        if (e.detail != null) {
             idData = e.detail.id
-        } else {
+        }
+        fetchData()
+        loading = false;
+    }
+
+    function handlerRemove(e) {
+        openModalRemove = !openModalRemove
+        if (e.detail != null && e.detail === "remove") {
             fetchData()
+            loading = false;
+            return
+        } else if (e.detail != null) {
+            idData = e.detail.id
+            titleData = e.detail.code
         }
     }
 
 </script>
 
+
 {#if openModalAdd}
-	<ModalAdd open={openModalAdd} on:close={handlerAdd}/>
+	<Sale on:close={handlerAdd}></Sale>
 {/if}
 {#if openModalDetail}
-	<ModalDetail id={idData} on:close={handlerDetail}/>
+	<ModalDetail id={idData} on:close={handlerDetail}></ModalDetail>
 {/if}
 {#if openModalUpdate}
-	<ModalUpdate id={idData} open={openModalUpdate} on:close={handlerUpdate}/>
+	<ModalUpdate open={openModalUpdate} id={idData} on:close={handlerUpdate}></ModalUpdate>
 {/if}
-
-{#if removeIsOpen}
-	<ModalRemove openRemove={removeIsOpen} id={idData} on:close={handlerRemove}/>
+{#if openModalRemove}
+	<ModalRemove id={idData} title={titleData} on:close={handlerRemove}></ModalRemove>
 {/if}
-
-<div class="w-full h-full">
+<div class="w-full">
 	{#if (loading)}
 		<div class="flex w-full h-[80vh] mt-3 rounded-2xl bg-white justify-center items-center">
 			<img src="/icon/gift/loading.gif" class="h-50 w-50 p-1 justify-center" alt="Tauri Logo"/>
@@ -152,6 +152,6 @@
 		</div>
 
 
-		<Table headers={headers} data={data} on:detail={handlerDetail} on:remove={handlerRemove} on:update={handlerUpdate}/>
+		<Table headers={headerTable} data={data} on:detail={handlerDetail} on:update={handlerUpdate} on:remove={handlerRemove}/>
 	{/if}
 </div>
