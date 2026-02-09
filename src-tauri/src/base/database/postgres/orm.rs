@@ -324,7 +324,7 @@ where
         );
 
         if self.debug {
-            println!("query: {}", query_str);
+            println!("query: {} , => {}", query_str, file!());
         }
 
         let result = sqlx::query_as::<_, T>(query_str.as_str())
