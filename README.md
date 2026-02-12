@@ -1,3 +1,40 @@
+
+## started tauri developer
+install nvm via brew
+
+```
+brew install nvm
+
+# add direktori nvm and add source to .zshrc
+mkdir ~/.nvm
+echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.zshrc
+echo 'source $(brew --prefix nvm)/nvm.sh' >> ~/.zshrc
+source ~/.zshrc
+
+```
+
+install node(include npm)
+``` bash
+nvm install --lts
+```
+verify instalation node and npm
+``` bash
+node -v
+npm -v
+```
+
+install tauri cli
+``` bash
+npm install --save-dev @tauri-apps/cli
+```
+
+try run taury
+``` bash
+npm run tauri dev
+```
+
+
+
 # Tauri + SvelteKit
 
 This template should help get you started developing with Tauri and SvelteKit in Vite.
