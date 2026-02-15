@@ -17,3 +17,12 @@ async fn sale_list_pag() {
         Err(err) => panic!("DB error: {err}"),
     }
 }
+
+#[tokio::test]
+async fn test_fn_data() {
+    let mut filter: Filter = Filter::default();
+    match master_data::repository::sale::get_code_trx().await {
+        Ok(data) => println!("get data: {:?}", data),
+        Err(err) => panic!("DB error: {err}"),
+    }
+}

@@ -7,7 +7,7 @@
     };
 
     import {invoke} from "@tauri-apps/api/core";
-    import {createEventDispatcher, tick} from 'svelte';
+    import {createEventDispatcher, onMount, tick} from 'svelte';
 
     const dispatch = createEventDispatcher();
 
@@ -62,7 +62,6 @@
 
     function handlerSave() {
         saveSale(res)
-        console.log(res)
         dispatch("save");
         handlerClose()
     }

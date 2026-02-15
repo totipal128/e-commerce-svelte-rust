@@ -3,7 +3,7 @@ use crate::app::master_data::model::other_struct::Filter;
 use crate::app::master_data::model::sale::{Sale, SaleDetail};
 
 use crate::app::master_data::repository::sale::{
-    create_sale, delete_sale, get_detail_sale_by_id, get_list_sale, update_sale,
+    create_sale, delete_sale, get_code_trx, get_detail_sale_by_id, get_list_sale, update_sale,
 };
 use crate::base::database::postgres::orm::Pagination;
 use crate::base::responses::responses_struct::Responses;
@@ -72,6 +72,18 @@ pub async fn sale_delete(id: i32) -> Result<Responses<String>, Responses<String>
             success: true,
             ..Responses::default()
         }),
+        Err(err) => Err(Responses {
+            message: Some(err.to_string()),
+            success: false,
+            ..Responses::default()
+        }),
+    }
+}
+
+#[tauri::command]
+pub async fn sale_get_code_txr() -> Result<String, Responses<String>> {
+    match get_code_trx().await {
+        Ok(data) => Ok(data),
         Err(err) => Err(Responses {
             message: Some(err.to_string()),
             success: false,

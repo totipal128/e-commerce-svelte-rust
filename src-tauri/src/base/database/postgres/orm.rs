@@ -190,6 +190,20 @@ where
 
         self
     }
+
+    /*
+    function for where datau manually
+
+    example:
+    .where_str("name='toti' AND age=20")
+    */
+    pub fn where_str(mut self, query: &str) -> Self {
+        self.filter_AND
+            .get_or_insert_with(Vec::new)
+            .push(format!("{}", query));
+
+        self
+    }
     pub fn where_clause_String(mut self, field: &str, value: String) -> Self {
         self.filter_AND
             .get_or_insert_with(Vec::new)
@@ -730,5 +744,22 @@ where
             .map_err(|e| e.to_string())?;
 
         Ok(String::from("Delete Data Success !"))
+    }
+
+    //
+
+    pub async fn fetch_raw(mut self, query: &str) -> Result<Vec<T>, String> {
+        let pool = db_pool().await.map_err(|e| e.to_string())?;
+
+        let result = sqlx::query_as::<_, T>(query)
+            .fetch_all(pool) // pool sudah murni
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if self.debug {
+            print!("{}", query);
+        }
+
+        Ok(result)
     }
 }

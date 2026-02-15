@@ -29,6 +29,7 @@ pub fn run() {
             app::master_data::controller::items::get_items_by_barcode,
             app::master_data::controller::items::get_items_price__by_items_id,
             //
+            app::master_data::controller::sale::sale_get_code_txr,
             app::master_data::controller::sale::sale_list,
             app::master_data::controller::sale::sale_by_id,
             app::master_data::controller::sale::sale_create,

@@ -17,6 +17,7 @@
         try {
 			let result = await invoke("consumer_list")
 			listDataConsumer = result.results
+            codeSale = await invoke("sale_get_code_txr")
         }
         catch(err) {
             console.error(err)
@@ -25,8 +26,6 @@
 			loading = false
         }
     }
-
-    onMount(fetchListConsumer)
 
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -38,7 +37,7 @@
     // console.log("Screen H", height35)
     // console.log("Screen H", height-height35)
 
-    let codeSale = "CODE-01";
+    let codeSale = $state("");
     let dataByBarcode = $state(null);
     let loading = $state(true);
     let result_data = $state({
@@ -62,6 +61,24 @@
             }
         ],
     });
+
+    async function get_code_txr() {
+        loading = true
+        try {
+            codeSale = await invoke("sale_get_code_txr")
+            console.log(codeSale, "=====")
+
+        } catch (err) {
+            console.log("err", err)
+        } finally {
+            loading = false;
+        }
+    }
+	console.log(codeSale)
+
+
+    onMount(get_code_txr)
+    onMount(fetchListConsumer)
 
     async function getByBarcodeDetail(barcode) {
         loading = true
@@ -134,6 +151,8 @@
 
         await tick(); // tunggu DOM siap
         refs[0]?.[0]?.focus();
+        get_code_txr()
+        console.log("1 ===================", codeSale)
     }
 
     function parseNumber(v) {

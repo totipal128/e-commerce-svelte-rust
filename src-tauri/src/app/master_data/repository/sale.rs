@@ -1,7 +1,49 @@
 use crate::app::master_data::model::other_struct::Filter;
 use crate::app::master_data::model::sale::{Sale, SaleDetail, SaleItem};
-use crate::app::master_data::repository::items_repo::update_item;
-use crate::base::database::postgres::orm::{Pagination, QueryBuilderPostgrest};
+use crate::base::database::postgres::orm::{Model, Pagination, QueryBuilderPostgrest};
+use chrono::Local;
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
+
+#[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
+struct checkCodeSale {
+    pub code: String,
+}
+impl Model for checkCodeSale {
+    const TABLE: &'static str = "sale";
+    const FIELDS_INSERT: &'static [&'static str] = &[];
+}
+
+pub async fn get_code_trx() -> Result<String, String> {
+    let date_now = Local::now().format("%Y%m%d").to_string();
+    let format_data = format!("TRX-{}", date_now);
+
+    let _qs1 = QueryBuilderPostgrest::<checkCodeSale>::new()
+        .debug()
+        .fetch_raw(
+            format!(
+                "SELECT  code FROM sale  WHERE code ilike '{}%' ORDER BY id DESC LIMIT 1",
+                format_data
+            )
+            .as_str(),
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if _qs1.len() > 0 {
+        let code_split = _qs1[0].code.split('-').collect::<Vec<&str>>();
+        println!("{:?}", code_split);
+        if code_split.len() > 0 {
+            return Ok(format!(
+                "{}-{}",
+                format_data,
+                code_split[code_split.len() - 1].parse::<i32>().unwrap() + 1
+            ));
+        }
+    }
+
+    Ok(format!("{}-1", format_data))
+}
 
 pub async fn get_list_sale(mut filter: Option<Filter>) -> Result<Pagination<Sale>, String> {
     let qs = QueryBuilderPostgrest::<Sale>::new();
@@ -56,16 +98,16 @@ pub async fn create_sale(mut data: SaleDetail) -> Result<Sale, String> {
         qs = qs.insert_i32("total_item", data.total_item.unwrap());
     }
     if data.total.is_some() {
-        qs = qs.insert_f64("total", data.total.unwrap())
+        qs = qs.insert_f64("total", data.total.unwrap());
     }
     if data.change.is_some() {
-        qs = qs.insert_f64("change", data.change.unwrap())
+        qs = qs.insert_f64("change", data.change.unwrap());
     }
     if data.payment.is_some() {
-        qs = qs.insert_f64("payment", data.payment.unwrap())
+        qs = qs.insert_f64("payment", data.payment.unwrap());
     }
     if data.created_by_id.is_some() {
-        qs = qs.insert_i32("created_by_id", data.created_by_id.unwrap())
+        qs = qs.insert_i32("created_by_id", data.created_by_id.unwrap());
     }
 
     let result = qs.create().await.map_err(|e| e.to_string())?;
@@ -107,21 +149,21 @@ pub async fn update_sale(data: SaleDetail) -> Result<Sale, String> {
         qs = qs.set_i32("total_item", data.total_item.unwrap());
     }
     if data.total.is_some() {
-        qs = qs.set_f64("total", data.total.unwrap())
+        qs = qs.set_f64("total", data.total.unwrap());
     }
     if data.change.is_some() {
-        qs = qs.set_f64("change", data.change.unwrap())
+        qs = qs.set_f64("change", data.change.unwrap());
     }
     if data.payment.is_some() {
-        qs = qs.set_f64("payment", data.payment.unwrap())
+        qs = qs.set_f64("payment", data.payment.unwrap());
     }
     if data.created_by_id.is_some() {
-        qs = qs.set_i32("created_by_id", data.created_by_id.unwrap())
+        qs = qs.set_i32("created_by_id", data.created_by_id.unwrap());
     }
 
     if let Some(item) = &mut data.items.clone() {
-        for (k, i) in item.iter_mut().enumerate() {
-            if i.id.unwrap() < 1 {
+        for i in item.iter_mut() {
+            if i.id.unwrap_or(0) < 1 {
                 i.sale_id = data.id;
                 create__sale_item(i).await.map_err(|e| e.to_string())?;
                 continue;
@@ -199,7 +241,7 @@ pub async fn create__sale_item(data: &SaleItem) -> Result<SaleItem, String> {
         qs = qs.insert_f64("total", data.total.unwrap());
     }
     if data.qty.is_some() {
-        qs = qs.insert_i32("qty", data.qty.unwrap())
+        qs = qs.insert_i32("qty", data.qty.unwrap());
     }
 
     let mut result = qs.create().await.map_err(|e| e.to_string())?;
@@ -232,7 +274,7 @@ pub async fn update__sale_item(data: &SaleItem) -> Result<SaleItem, String> {
         qs = qs.set_f64("total", data.total.unwrap());
     }
     if data.qty.is_some() {
-        qs = qs.set_i32("qty", data.qty.unwrap())
+        qs = qs.set_i32("qty", data.qty.unwrap());
     }
 
     let result = qs
