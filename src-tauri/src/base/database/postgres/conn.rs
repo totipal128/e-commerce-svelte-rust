@@ -11,6 +11,7 @@ pub async fn db_pool() -> Result<&'static Pool<Postgres>, sqlx::Error> {
         .get_or_try_init(|| async {
             dotenvy::dotenv().ok();
             let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+            println!("database_url: {}", database_url);
 
             PgPoolOptions::new()
                 .max_connections(5)

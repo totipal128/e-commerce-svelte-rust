@@ -181,7 +181,6 @@ where
             Some("float") => format!("{}", value),
             Some("bool") => format!("{}", value),
             _ => format!("'{}'", value),
-            None => format!("'{}'", value),
         };
 
         self.filter_AND
@@ -261,7 +260,6 @@ where
             Some("float") => format!("{}", value),
             Some("bool") => format!("{}", value),
             _ => format!("'{}'", value),
-            None => format!("'{}'", value),
         };
 
         self.filter_exclude
@@ -278,7 +276,6 @@ where
             Some("float") => format!("{}", value),
             Some("bool") => format!("{}", value),
             _ => format!("'{}'", value),
-            None => format!("'{}'", value),
         };
 
         self.filter_OR
@@ -593,7 +590,6 @@ where
             Some("int") => format!("{}", value),
             Some("bool") => format!("{}", value),
             _ => value.to_string(),
-            None => value.to_string(),
         };
 
         if let Some(ref mut set) = self.update_set {

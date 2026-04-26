@@ -1,0 +1,466 @@
+    Checking e-commerce v0.1.0 (/Users/rltmacbook17/Documents/APPLIKASI/rust/desktop/e-commerce-svelte-rust/src-tauri)
+error[E0603]: module `model` is private
+ --> src/app/master_data/repository/consumer.rs:1:33
+  |
+1 | use crate::app::authentication::model::users::User;
+  |                                 ^^^^^  ----- module `users` is not publicly re-exported
+  |                                 |
+  |                                 private module
+  |
+note: the module `model` is defined here
+ --> src/app/authentication/mod.rs:2:1
+  |
+2 | mod model;
+  | ^^^^^^^^^^
+
+warning: unused imports: `Pool` and `Postgres`
+ --> src/lib.rs:1:12
+  |
+1 | use sqlx::{Pool, Postgres};
+  |            ^^^^  ^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `crate::app::authentication`
+ --> src/app/authentication/test/users_test.rs:1:5
+  |
+1 | use crate::app::authentication;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src/app/authentication/test/mod.rs:1:1
+  |
+1 | mod users_test;
+  | ^^^^^^^^^^^^^^^
+
+warning: unused imports: `UserFilter` and `UserNoPass`
+ --> src/app/authentication/test/users_test.rs:2:48
+  |
+2 | use crate::app::authentication::model::users::{UserFilter, UserNoPass};
+  |                                                ^^^^^^^^^^  ^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src/app/authentication/test/mod.rs:1:1
+  |
+1 | mod users_test;
+  | ^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::base::database::postgres::conn::db_pool`
+ --> src/app/authentication/test/users_test.rs:3:5
+  |
+3 | use crate::base::database::postgres::conn::db_pool;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src/app/authentication/test/mod.rs:1:1
+  |
+1 | mod users_test;
+  | ^^^^^^^^^^^^^^^
+
+warning: unused import: `ItemPrice`
+ --> src/app/master_data/controller/items.rs:3:5
+  |
+3 |     ItemPrice, Items, ItemsCreate, ItemsDetail, ItemsFilter, ItemsList,
+  |     ^^^^^^^^^
+
+warning: unused import: `crate::app::master_data::controller::sale`
+ --> src/app/master_data/controller/sale.rs:1:5
+  |
+1 | use crate::app::master_data::controller::sale;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::app::master_data::model::consumer::Consumer`
+ --> src/app/master_data/controller/supplier.rs:1:5
+  |
+1 | use crate::app::master_data::model::consumer::Consumer;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `chrono::format::Item`
+ --> src/app/master_data/model/sale.rs:2:5
+  |
+2 | use chrono::format::Item;
+  |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ItemsFilter`
+ --> src/app/master_data/repository/item_price.rs:1:63
+  |
+1 | use crate::app::master_data::model::items::{ItemPrice, Items, ItemsFilter};
+  |                                                               ^^^^^^^^^^^
+
+warning: unused import: `Pagination`
+ --> src/app/master_data/repository/item_price.rs:2:44
+  |
+2 | use crate::base::database::postgres::orm::{Pagination, QueryBuilderPostgrest};
+  |                                            ^^^^^^^^^^
+
+warning: unused import: `delete_item_price__by_item_id`
+ --> src/app/master_data/repository/items_repo.rs:6:25
+  |
+6 |     create_items_price, delete_item_price__by_item_id, get_items_price_by_item_id,
+  |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type `checkCodeSale` should have an upper camel case name
+ --> src/app/master_data/repository/sale.rs:9:8
+  |
+9 | struct checkCodeSale {
+  |        ^^^^^^^^^^^^^ help: convert the identifier to upper camel case (notice the capitalization): `CheckCodeSale`
+  |
+  = note: `#[warn(non_camel_case_types)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: unused import: `crate::app::master_data`
+ --> src/app/master_data/test/items_test.rs:1:5
+  |
+1 | use crate::app::master_data;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src/app/master_data/test/mod.rs:2:1
+  |
+2 | mod items_test;
+  | ^^^^^^^^^^^^^^^
+
+warning: unused imports: `ItemPrice`, `ItemsCreate`, `ItemsFilter`, and `Items`
+ --> src/app/master_data/test/items_test.rs:2:45
+  |
+2 | use crate::app::master_data::model::items::{ItemPrice, Items, ItemsCreate, ItemsFilter};
+  |                                             ^^^^^^^^^  ^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src/app/master_data/test/mod.rs:2:1
+  |
+2 | mod items_test;
+  | ^^^^^^^^^^^^^^^
+
+warning: unused import: `serde::de::Unexpected::Str`
+ --> src/app/master_data/test/items_test.rs:3:5
+  |
+3 | use serde::de::Unexpected::Str;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src/app/master_data/test/mod.rs:2:1
+  |
+2 | mod items_test;
+  | ^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::app::master_data`
+ --> src/app/master_data/test/sale.rs:1:5
+  |
+1 | use crate::app::master_data;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::app::master_data::model::items::ItemsFilter`
+ --> src/app/master_data/test/sale.rs:2:5
+  |
+2 | use crate::app::master_data::model::items::ItemsFilter;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::app::master_data::model::other_struct::Filter`
+ --> src/app/master_data/test/sale.rs:3:5
+  |
+3 | use crate::app::master_data::model::other_struct::Filter;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `ItemsCreate` and `Items`
+ --> src/app/master_data/test/test_query_builder.rs:1:45
+  |
+1 | use crate::app::master_data::model::items::{Items, ItemsCreate};
+  |                                             ^^^^^  ^^^^^^^^^^^
+
+warning: unused imports: `Pagination` and `QueryBuilderPostgrest`
+ --> src/app/master_data/test/test_query_builder.rs:2:44
+  |
+2 | use crate::base::database::postgres::orm::{Pagination, QueryBuilderPostgrest};
+  |                                            ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `close_db`
+ --> src/base/database/postgres/orm.rs:1:45
+  |
+1 | use crate::base::database::postgres::conn::{close_db, db_pool};
+  |                                             ^^^^^^^^
+
+warning: unused import: `sqlx::database::HasArguments`
+ --> src/base/database/postgres/orm.rs:3:5
+  |
+3 | use sqlx::database::HasArguments;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `sqlx::query::QueryAs`
+ --> src/base/database/postgres/orm.rs:5:5
+  |
+5 | use sqlx::query::QueryAs;
+  |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::iter::Filter`
+ --> src/base/database/postgres/orm.rs:7:5
+  |
+7 | use std::iter::Filter;
+  |     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `tauri::webview::cookie::time::Error::Format`
+ --> src/base/database/postgres/orm.rs:8:5
+  |
+8 | use tauri::webview::cookie::time::Error::Format;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `QueryBuilderPostgrest`
+ --> src/base/database/postgres/orm_test.rs:1:51
+  |
+1 | use crate::base::database::postgres::orm::{Model, QueryBuilderPostgrest};
+  |                                                   ^^^^^^^^^^^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src/base/database/postgres/mod.rs:3:1
+  |
+3 | mod orm_test;
+  | ^^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+  --> src/app/authentication/repository/users_repo.rs:25:9
+   |
+25 |     let mut qs = QueryBuilderPostgrest::<UserNoPass>::new();
+   |         ----^^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+  --> src/app/authentication/repository/users_repo.rs:27:9
+   |
+27 |     let mut result = qs
+   |         ----^^^^^^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/authentication/repository/users_repo.rs:105:9
+    |
+105 |     let mut qs = QueryBuilderPostgrest::<User>::new().where_clause_i32("id", id);
+    |         ----^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/app/master_data/repository/consumer.rs:21:9
+   |
+21 |     let mut qs = QueryBuilderPostgrest::<Consumer>::new();
+   |         ----^^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/app/master_data/repository/consumer.rs:23:9
+   |
+23 |     let mut data = qs
+   |         ----^^^^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+ --> src/app/master_data/repository/item_price.rs:3:41
+  |
+3 | pub async fn get_items_price_by_item_id(mut item_id: i32) -> Result<Vec<ItemPrice>, String> {
+  |                                         ----^^^^^^^
+  |                                         |
+  |                                         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/app/master_data/repository/item_price.rs:23:33
+   |
+23 | pub async fn create_items_price(mut r: &ItemPrice, seq: usize) -> Result<ItemPrice, String> {
+   |                                 ----^
+   |                                 |
+   |                                 help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/app/master_data/repository/items_repo.rs:36:9
+   |
+36 |     let mut qs = QueryBuilderPostgrest::<ItemsDetail>::new();
+   |         ----^^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/master_data/repository/items_repo.rs:190:9
+    |
+190 |     let mut qs = QueryBuilderPostgrest::<ItemPriceFind>::new();
+    |         ----^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/master_data/repository/items_repo.rs:192:9
+    |
+192 |     let mut result = qs
+    |         ----^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/master_data/repository/items_repo.rs:207:9
+    |
+207 |     let mut qs = QueryBuilderPostgrest::<ItemPriceFind>::new();
+    |         ----^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/master_data/repository/items_repo.rs:209:9
+    |
+209 |     let mut result = qs
+    |         ----^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/app/master_data/repository/sale.rs:65:9
+   |
+65 |     let mut qs = QueryBuilderPostgrest::<SaleDetail>::new();
+   |         ----^^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/master_data/repository/sale.rs:196:9
+    |
+196 |     let mut qs = QueryBuilderPostgrest::<SaleItem>::new();
+    |         ----^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/master_data/repository/sale.rs:198:9
+    |
+198 |     let mut result = qs
+    |         ----^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/master_data/repository/sale.rs:208:9
+    |
+208 |     let mut qs = QueryBuilderPostgrest::<SaleItem>::new();
+    |         ----^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/master_data/repository/sale.rs:209:9
+    |
+209 |     let mut result = qs
+    |         ----^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/app/master_data/repository/sale.rs:247:9
+    |
+247 |     let mut result = qs.create().await.map_err(|e| e.to_string())?;
+    |         ----^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/app/master_data/repository/supplier.rs:20:9
+   |
+20 |     let mut qs = QueryBuilderPostgrest::<Supplier>::new();
+   |         ----^^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/app/master_data/repository/supplier.rs:22:9
+   |
+22 |     let mut data = qs
+   |         ----^^^^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/app/master_data/repository/supplier.rs:31:30
+   |
+31 | pub async fn create_supplier(mut data: Supplier) -> Result<Supplier, String> {
+   |                              ----^^^^
+   |                              |
+   |                              help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/base/database/postgres/orm.rs:686:17
+    |
+686 |             let mut q = sqlx::query_as::<_, T>(&sql);
+    |                 ----^
+    |                 |
+    |                 help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/base/database/postgres/orm.rs:691:17
+    |
+691 |             let mut update_value = self.update_value.clone().unwrap();
+    |                 ----^^^^^^^^^^^^
+    |                 |
+    |                 help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/base/database/postgres/orm.rs:707:17
+    |
+707 |             let mut q = sqlx::query_as::<_, T>(&sql);
+    |                 ----^
+    |                 |
+    |                 help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/base/database/postgres/orm.rs:749:28
+    |
+749 |     pub async fn fetch_raw(mut self, query: &str) -> Result<Vec<T>, String> {
+    |                            ----^^^^
+    |                            |
+    |                            help: remove this `mut`
+
+warning: unused import: `Executor`
+ --> src/base/database/postgres/orm.rs:6:12
+  |
+6 | use sqlx::{Executor, FromRow};
+  |            ^^^^^^^^
+
+warning: unused variable: `params`
+   --> src/base/database/postgres/orm.rs:563:13
+    |
+563 |         let params = (1..=values.len())
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_params`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `result`
+   --> src/base/database/postgres/orm.rs:739:13
+    |
+739 |         let result = sqlx::query(&sql)
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
+
+warning: unused variable: `item`
+  --> src/app/master_data/controller/items.rs:69:12
+   |
+69 |         Ok(item) => Ok(Responses {
+   |            ^^^^ help: if this is intentional, prefix it with an underscore: `_item`
+
+warning: unreachable pattern
+   --> src/base/database/postgres/orm.rs:263:13
+    |
+262 |             _ => format!("'{}'", value),
+    |             - matches any value
+263 |             None => format!("'{}'", value),
+    |             ^^^^ no value can reach this
+    |
+    = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: unreachable pattern
+   --> src/base/database/postgres/orm.rs:280:13
+    |
+279 |             _ => format!("'{}'", value),
+    |             - matches any value
+280 |             None => format!("'{}'", value),
+    |             ^^^^ no value can reach this
+
+For more information about this error, try `rustc --explain E0603`.
+warning: `e-commerce` (lib) generated 57 warnings
+error: could not compile `e-commerce` (lib) due to 1 previous error; 57 warnings emitted

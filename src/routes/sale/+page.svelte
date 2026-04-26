@@ -11,6 +11,12 @@
     let loading = $state(true);
     let searchDb = $state("")
     let searchDb_1 = $state("")
+    
+    // Pagination state
+    let currentPage = $state(1);
+    let totalPages = $state(1);
+    let totalItems = $state(0);
+    let pageSize = $state(10);
 
     let headerTable = [
         {name: 'Tanggal Transaksi', value: 'created_at', type_data: 'date'},
@@ -42,16 +48,25 @@
             const result = await invoke("sale_list", {
                 filter: {
                     search: searchDb,
+                    page: currentPage,
+                    page_size: pageSize
                 }
             })
 
-            data = result.results
+            data = result.results;
+            totalPages = result.total_page;
+            totalItems = result.count;
+            currentPage = result.page;
         } catch (err) {
             console.log(err)
         } finally {
             loading = false;
         }
+    }
 
+    function handlePageChange(newPage) {
+        currentPage = newPage;
+        fetchData();
     }
 
     onMount(fetchData)
@@ -103,7 +118,7 @@
 
 
 {#if openModalAdd}
-	<Sale on:close={handlerAdd}></Sale>
+	<Sale open={true} onclose={handlerAdd}></Sale>
 {/if}
 {#if openModalDetail}
 	<ModalDetail id={idData} on:close={handlerDetail}></ModalDetail>
@@ -152,6 +167,16 @@
 		</div>
 
 
-		<Table headers={headerTable} data={data} on:detail={handlerDetail} on:update={handlerUpdate} on:remove={handlerRemove}/>
+		<Table 
+            headers={headerTable} 
+            data={data} 
+            page={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            onPageChange={handlePageChange}
+            on:detail={handlerDetail} 
+            on:update={handlerUpdate} 
+            on:remove={handlerRemove}
+        />
 	{/if}
 </div>

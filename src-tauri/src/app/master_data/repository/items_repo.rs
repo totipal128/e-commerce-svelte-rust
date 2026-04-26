@@ -28,6 +28,7 @@ pub async fn get_all_items(
     }
 
     Ok(qs
+        .order("items.id DESC")
         .find_by_pagination(page, page_size)
         .await
         .map_err(|e| e.to_string())?)
@@ -191,7 +192,7 @@ pub async fn get_by_barcode(barcode: String) -> Result<ItemPriceFind, String> {
 
     let mut result = qs
         .model("items i")
-        .select("i.id, ip.barcode, i.name, i.items_category_id, ip.type_unit, ip.price_buy,ip.price_sell, coalesce(i.qty_stock / NULLIF(ip.content, 0), 0) as qty")
+        .select("i.id, ip.barcode, i.name, i.items_category_id, ip.type_unit, ip.price_buy,ip.price_sell, coalesce(i.qty_stock / NULLIF(coalesce(ip.content, 1), 0), 0) as qty")
         .join("left join items_price ip ON i.id = ip.item_id")
         .where_clause_str("ip.barcode", barcode.as_str())
         .find_one()
@@ -208,7 +209,7 @@ pub async fn get_by_items_id(items_id: i32) -> Result<Vec<ItemPriceFind>, String
 
     let mut result = qs
         .model("items i")
-        .select("i.id, ip.barcode, i.name, i.items_category_id, ip.type_unit, ip.price_buy,ip.price_sell, i.qty_stock / ip.content as qty")
+        .select("i.id, ip.barcode, i.name, i.items_category_id, ip.type_unit, ip.price_buy,ip.price_sell, coalesce(i.qty_stock / NULLIF(coalesce(ip.content, 1), 0), 0) as qty")
         .join("left join items_price ip ON i.id = ip.item_id")
         .where_clause_i32("ip.item_id", items_id)
         .find_all()
@@ -216,4 +217,52 @@ pub async fn get_by_items_id(items_id: i32) -> Result<Vec<ItemPriceFind>, String
         .map_err(|e| e.to_string())?;
 
     Ok(result)
+}
+pub async fn reduce_stock(item_id: i32, unit: &str, qty_sold: i32) -> Result<(), String> {
+    let pool = crate::base::database::postgres::conn::db_pool()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Get content conversion factor for the unit
+    let content: i32 = sqlx::query_scalar("SELECT coalesce(content, 1) FROM items_price WHERE item_id = $1 AND type_unit = $2")
+        .bind(item_id)
+        .bind(unit)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let total_reduce = qty_sold * content;
+
+    sqlx::query("UPDATE items SET qty_stock = qty_stock - $1 WHERE id = $2")
+        .bind(total_reduce)
+        .bind(item_id)
+        .execute(pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+pub async fn increase_stock(item_id: i32, unit: &str, qty_bought: i32) -> Result<(), String> {
+    let pool = crate::base::database::postgres::conn::db_pool()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Get content conversion factor for the unit
+    let content: i32 = sqlx::query_scalar("SELECT coalesce(content, 1) FROM items_price WHERE item_id = $1 AND type_unit = $2")
+        .bind(item_id)
+        .bind(unit)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let total_increase = qty_bought * content;
+
+    sqlx::query("UPDATE items SET qty_stock = qty_stock + $1 WHERE id = $2")
+        .bind(total_increase)
+        .bind(item_id)
+        .execute(pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
 }

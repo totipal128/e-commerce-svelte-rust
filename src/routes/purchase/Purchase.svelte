@@ -1,270 +1,315 @@
 <script>
-    import {createEventDispatcher} from 'svelte';
-    import items from '$lib/data/items.json';
-
+    import { createEventDispatcher } from "svelte";
+    import { tick } from "svelte";
+    import ModalAdd from "./ModalAddPurchase.svelte";
+    import ModalSearchItem from "../sale/ModalSearchItem.svelte";
+    import { invoke } from "@tauri-apps/api/core";
+    import { onMount } from "svelte";
+    import { showToast } from "$lib/store/toast.js";
 
     const dispatch = createEventDispatcher();
-    let {
-        codeSale = "CODE-01",
-        open = false,
-        data = [
-            {code: "", name: "", unit: "", price: 0, qty: 1, total: 0},
-        ]
+    let { open = false } = $props();
 
+    let listSuppliers = $state([]);
+    let codePurchase = $state("");
+    let loading = $state(true);
+    let openModalAdd = $state(false);
+    let openModalSearch = $state(false);
+    let indexRowSearch = $state(null);
+    let dataByBarcode = $state(null);
+    let refs = $state([]);
 
-    } = $props()
+    let result_data = $state({
+        code: null,
+        supplier_id: null,
+        discount: 0,
+        ppn: 0,
+        total_item: 0,
+        total: 0,
+        payment: 0,
+        items: [
+            {
+                code: null,
+                items_id: null,
+                items_name: null,
+                items_unit: null,
+                items_price: null,
+                total: null,
+                qty: null,
+            },
+        ],
+    });
 
-    let headers = [
-        {name: 'Code Barang', value: 'code', type: 'input-code'},
-        {name: 'Nama Barang', value: 'name', type: 'text'},
-        {name: 'Satuan', value: 'unit', type: 'select'},
-        {name: 'Harga', value: 'price', type: 'number'},
-        {name: 'QTY', value: 'qty', type: 'input-number'},
-        {name: 'Total', value: 'total', type: 'number'},
-    ];
-    let optionSelectItem = [
-        {name: "pcs"},
-        {name: "box"},
-        {name: "gt"},
-        {name: "gt"},
-    ]
-    let data_c = $state(structuredClone(data));
-    let dateN = new Date();
-    let total = $state(0)
-    let index_row = $state(0);
-    let unitItem = $state("")
-
-    function formatDate(date, format = "yyyy-mm-dd") {
-        const d = new Date(date);
-        const day = String(d.getDate()).padStart(2, "0");
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const year = d.getFullYear();
-
-        if (format === "dd-mm-yyyy") {
-            return `${day}-${month}-${year}`;
+    async function fetchData() {
+        try {
+            const suppliers = await invoke("supplier_list");
+            listSuppliers = suppliers.results;
+            codePurchase = await invoke("purchase_get_code");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            loading = false;
         }
-        return `${year}-${month}-${day}`;
     }
 
-    function close() {
-        dispatch('close');
-    }
+    onMount(fetchData);
 
-    function refresh() {
-        data_c = structuredClone(data);
+    async function getByBarcodeDetail(barcode) {
+        loading = true;
+        try {
+            const result = await invoke("get_items_by_barcode", { barcode });
+            dataByBarcode = result.data;
+        } catch (err) {
+            console.error(err);
+        } finally {
+            loading = false;
+        }
     }
 
     function parseNumber(v) {
         if (!v) return 0;
-        return Number(v.toString().replace(/\./g, ""));
-    };
-
-    function removeIndexTable(i) {
-
+        return Number(v.toString().replace(/[^0-9]/g, ""));
     }
 
-    function selectUnitItem(e) {
-        console.log(e)
+    function calculateTotal(index) {
+        const item = result_data.items[index];
+        if (!item || !item.items_id) return;
+        item.total = parseNumber(item.items_price) * parseNumber(item.qty);
+        result_data.total = result_data.items.reduce((acc, i) => acc + (parseNumber(i.total) || 0), 0);
+        result_data.total_item = result_data.items.reduce((acc, i) => acc + (parseNumber(i.qty) || 0), 0);
     }
 
-    $effect(() => {
-        if (data_c.length - 1 === index_row) {
-            data_c.push(
-                {code: "", name: "", unit: "", price: 0, qty: 1, total: 0}
-            )
+    async function handleCodeInput(e, code, index_row, index_cell) {
+        if (!code) return;
+        const dupIndex = result_data.items.findIndex((item, i) => item.code === code && i !== index_row);
+        if (dupIndex !== -1) {
+            result_data.items[dupIndex].qty += 1;
+            calculateTotal(dupIndex);
+            result_data.items[index_row] = { code: null, items_id: null, items_name: null, items_unit: null, items_price: null, total: null, qty: null };
+            refs[index_row]?.focus();
+            return;
         }
 
-        if (index_row !== null) {
-            let found = items.find(item => item.code === data_c[index_row].code);
-
-            if (found === undefined) return;
-
-            console.log(found.name)
-            data_c[index_row].name = found.name;
-            data_c[index_row].unit = found.unit;
-            data_c[index_row].price = found.price;
-            data_c[index_row].total = parseNumber(found.price) * parseNumber(data_c[index_row].qty);
-
-            total = parseNumber(data_c.reduce((acc, item) => acc + item.total, 0)).toLocaleString('id-ID', {
-                style: 'currency',
-                currency: 'IDR'
-            });
+        await getByBarcodeDetail(code);
+        if (dataByBarcode == null) {
+            indexRowSearch = index_row;
+            openModalSearch = true;
+            return;
         }
-    })
+
+        result_data.items[index_row].items_id = dataByBarcode.id;
+        result_data.items[index_row].items_name = dataByBarcode.name;
+        result_data.items[index_row].items_unit = dataByBarcode.type_unit;
+        result_data.items[index_row].items_price = dataByBarcode.price_buy; // Use price_buy for purchase
+        result_data.items[index_row].qty = 1;
+        calculateTotal(index_row);
+
+        if (result_data.items.length - 1 === index_row) {
+            result_data.items.push({ code: null, items_id: null, items_name: null, items_unit: null, items_price: null, total: null, qty: null });
+        }
+        dataByBarcode = null;
+        tick().then(() => refs[index_row + 1]?.focus());
+    }
+
+    function handleItemSelected(item) {
+        if (indexRowSearch !== null) {
+            const dupIndex = result_data.items.findIndex(it => it.items_id === item.id);
+            if (dupIndex !== -1) {
+                result_data.items[dupIndex].qty += 1;
+                calculateTotal(dupIndex);
+                result_data.items[indexRowSearch].code = null;
+                tick().then(() => refs[indexRowSearch]?.focus());
+            } else {
+                result_data.items[indexRowSearch].code = item.barcode;
+                result_data.items[indexRowSearch].items_id = item.id;
+                result_data.items[indexRowSearch].items_name = item.name;
+                result_data.items[indexRowSearch].items_unit = item.type_unit;
+                result_data.items[indexRowSearch].items_price = item.price_buy;
+                result_data.items[indexRowSearch].qty = 1;
+                calculateTotal(indexRowSearch);
+                if (result_data.items.length - 1 === indexRowSearch) {
+                    result_data.items.push({ code: null, items_id: null, items_name: null, items_unit: null, items_price: null, total: null, qty: null });
+                }
+                tick().then(() => refs[indexRowSearch + 1]?.focus());
+            }
+            openModalSearch = false;
+        }
+    }
+
+    async function keydown(e, r, c, type) {
+        if (e.key === "Enter") {
+            if (type === "qty") {
+                calculateTotal(r);
+                tick().then(() => refs[r + 1]?.focus());
+                return;
+            }
+            handleCodeInput(e, e.target.value, r, c);
+        }
+    }
+
+    function savekeydown(e) {
+        if (e.key === "F8") {
+            if (result_data.total <= 0) {
+                showToast("Masukkan barang terlebih dahulu.", "error");
+                return;
+            }
+            result_data.code = codePurchase;
+            openModalAdd = true;
+        }
+        if (e.key === "Escape") dispatch("close");
+    }
+
+    function ensureRef(r, c) {
+        // Removed to avoid state_unsafe_mutation
+    }
+
+    function handlerCloseModalSave() {
+        openModalAdd = false;
+    }
+
+    function handleSaveSuccess() {
+        openModalAdd = false;
+        dispatch("close");
+    }
+
+    function formatDate(date) {
+        const d = new Date(date);
+        return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth()+1).toString().padStart(2, '0')}-${d.getFullYear()}`;
+    }
+
+    let headers = [
+        { name: "Code Barang", value: "code", type: "input-code" },
+        { name: "Nama Barang", value: "items_name", type: "text" },
+        { name: "Satuan", value: "items_unit", type: "text" },
+        { name: "Harga Beli", value: "items_price", type: "input-price" },
+        { name: "QTY", value: "qty", type: "input-number" },
+        { name: "Total", value: "total", type: "parse-number" },
+    ];
 </script>
 
 {#if open}
-    <div class="absolute h-full w-full bg-gray-300 z-100 top-0 left-0 p-3 ">
-        <div class="flex bg-gray-100  justify-center mb-2 rounded-2xl">
-            <p class="p-3 text-2xl"> Pembelian Barang</p>
-        </div>
-
-        <div class="flex justify-between bg-white p-4 rounded-sm">
-            <div class="bg-white p-1 pr-5 rounded-sm border-1 border-solid">
-                <table class="border-all border-default-medium">
-                    <tbody class="p-5">
-                    <tr class="border-b border-default-medium">
-                        <td class="p-2">No</td>
-                        <td class="p-2">:</td>
-                        <td class="p-2">
-                            <input
-                                    value="{codeSale}"
-                                    type="text"
-                                    id="visitors"
-                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-2.5 py-2 shadow-xs placeholder:text-body"
-                                    placeholder=""
-                                    readonly/>
-                        </td>
-                    </tr>
-                    <tr class="border-b border-default-medium">
-                        <td class="p-2">Consumer</td>
-                        <td class="p-2">:</td>
-                        <td class="p-2">
-                            <select
-                                    id="small"
-                                    class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body mb-4">
-                                <option selected>Choose a country</option>
-                                <option value="US">United States</option>
-                                <option value="CA">Canada</option>
-                                <option value="FR">France</option>
-                                <option value="DE">Germany</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr class="border-b border-default-medium">
-                        <td class="p-2">Tanggal</td>
-                        <td class="p-2">:</td>
-                        <td class="p-2">
-                            <input
-                                    value="{formatDate(dateN, 'dd-mm-yyyy')}"
-                                    type="text"
-                                    id="visitors"
-                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-2.5 py-2 shadow-xs placeholder:text-body"
-                                    placeholder=""
-                                    disabled/>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+    <div class="fixed inset-0 bg-gray-100 z-[100] flex flex-col p-4 overflow-auto" onkeydown={savekeydown} tabindex="0">
+        <!-- Header Section -->
+        <div class="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm mb-4">
+            <div class="flex gap-8">
+                <div class="space-y-2">
+                    <p class="text-sm text-gray-500">No. Pembelian</p>
+                    <p class="text-lg font-bold">{codePurchase}</p>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm text-gray-500">Supplier</p>
+                    <select bind:value={result_data.supplier_id} class="bg-gray-50 border rounded-lg px-4 py-2 focus:ring-brand focus:border-brand">
+                        <option value={null}>-- Pilih Supplier --</option>
+                        {#each listSuppliers as s}
+                            <option value={s.id}>{s.name}</option>
+                        {/each}
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm text-gray-500">Tanggal</p>
+                    <p class="text-lg font-bold">{formatDate(new Date())}</p>
+                </div>
             </div>
-
-            <div class="flex w-250 rounded-sm h-20 items-center pt-2 pl-20 mt-15 font-30" style="font-size: 50px">
-                <p class="">Total : </p>
-                <p class=""> {total}</p>
+            <div class="text-right">
+                <p class="text-sm text-gray-500">Total Pembelian</p>
+                <p class="text-5xl font-black text-brand">
+                    {result_data.total.toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 })}
+                </p>
             </div>
         </div>
 
-        <button onclick="{close}" type="button"
-                class=" p-3 m-5 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-            <div class="flex">
-                <img src="/icon/angle-double-small-left.svg" class="w-5 h-5" alt="back"/> Kembali
-            </div>
-        </button>
-
-        <button onclick="{refresh}" type="button"
-                class=" p-3 m-5 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-            <div class="flex">
-                <img src="/icon/refresh.svg" class="w-5 h-5 pr-2" alt="back"/> Refresh
-            </div>
-        </button>
-
-
-        <div class="mr-5 w-full">
-            <div class="table-auto md:table-fixed  bg-white h-max p-3 rounded-lg">
-
-
-                <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default h-[65vh] overflow-y-auto">
-                    <table class="w-full text-sm text-left rtl:text-right text-body">
-                        <thead class="bg-neutral-secondary-soft border-b border-default sticky top-0">
+        <!-- Table Section -->
+        <div class="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div class="overflow-y-auto flex-1">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 sticky top-0 z-10 border-b">
                         <tr>
+                            <th class="p-4 font-bold text-gray-600">#</th>
                             {#each headers as header}
-                                <th scope="col" class="px-6 py-3 font-medium">
-                                    {header['name']}
-                                </th>
+                                <th class="p-4 font-bold text-gray-600">{header.name}</th>
                             {/each}
-                            <th scope="col" class="px-6 py-3 font-medium">
-                                Action
-                            </th>
+                            <th class="p-4 font-bold text-gray-600">Aksi</th>
                         </tr>
-                        </thead>
-                        <tbody>
-                        {#each data_c as item, i (i)}
-                            <tr class="odd:bg-neutral-primary  border-b border-default">
-                                {#each headers as header}
-                                    <th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap">
-                                        {#if header['type'] === 'input-number'}
+                    </thead>
+                    <tbody>
+                        {#each result_data.items as item, i (i)}
+                            <tr class="border-b hover:bg-gray-50 transition-colors">
+                                <td class="p-4 text-gray-400">{i + 1}</td>
+                                {#each headers as header, hi}
+                                    <td class="p-2">
+                                        {#if header.type === 'input-code'}
                                             <input
-                                                    bind:value={item[header.value]}
-                                                    oninput={() =>(index_row = i) }
-                                                    type="number"
-                                                    id="visitors"
-                                                    size="10"
-                                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-2.5 py-2 shadow-xs placeholder:text-body"
-                                                    placeholder=""
+                                                bind:this={refs[i]}
+                                                bind:value={item[header.value]}
+                                                onkeydown={(e) => keydown(e, i, hi)}
+                                                class="w-full bg-gray-50 border border-transparent focus:border-brand focus:bg-white rounded-lg p-2 font-mono text-sm"
+                                                placeholder="Scan/Ketik..."
                                             />
-                                        {:else if header['type'] === 'input-code'}
+                                        {:else if header.type === 'input-number'}
                                             <input
-                                                    type="text"
-                                                    id="visitors"
-                                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-2.5 py-2 shadow-xs placeholder:text-body"
-                                                    bind:value={item[header.value]}
-                                                    oninput={() =>(index_row = i) }
-                                                    placeholder=""
+                                                type="number"
+                                                bind:value={item[header.value]}
+                                                oninput={() => calculateTotal(i)}
+                                                onkeydown={(e) => keydown(e, i, hi, 'qty')}
+                                                class="w-20 bg-gray-50 border border-transparent focus:border-brand focus:bg-white rounded-lg p-2 text-center font-bold"
                                             />
-                                        {:else if header['type'] === 'select'}
-                                            <select
-                                                    bind:value={item[header.value]}
-                                                    onchange={(e) => selectUnitItem(e.target.value)}
-                                                    id="small"
-                                                    class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body mb-4">
-                                                <option selected>Choose a country</option>
-                                                <option value="US">United States</option>
-                                                <option value="CA">Canada</option>
-                                                <option value="FR">France</option>
-                                                <option value="DE">Germany</option>
-                                            </select>
-                                        {:else if header['type'] === 'number'}
-                                            <input
-                                                    bind:value={item[header.value]}
-                                                    type="number"
-                                                    id="visitors"
-                                                    size="10"
-                                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-2.5 py-2 shadow-xs placeholder:text-body"
-                                                    placeholder=""
-                                                    readonly
+                                        {:else if header.type === 'input-price'}
+                                             <input
+                                                type="number"
+                                                bind:value={item[header.value]}
+                                                oninput={() => calculateTotal(i)}
+                                                class="w-32 bg-gray-50 border border-transparent focus:border-brand focus:bg-white rounded-lg p-2 text-right font-bold text-blue-600"
                                             />
-                                        {:else }
-                                            <input
-                                                    bind:value={item[header.value]}
-                                                    type="text"
-                                                    id="visitors"
-                                                    size="10"
-                                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-2.5 py-2 shadow-xs placeholder:text-body"
-                                                    placeholder=""
-                                                    readonly
-                                            />
+                                        {:else if header.type === 'parse-number'}
+                                            <div class="text-right font-bold">
+                                                {parseNumber(item[header.value]).toLocaleString('id-ID')}
+                                            </div>
+                                        {:else}
+                                            <div class="p-2 font-medium">{item[header.value] || '-'}</div>
                                         {/if}
-                                    </th>
+                                    </td>
                                 {/each}
-
-                                <td class="px-6 py-4">
-                                    <button
-                                            type="button"
-                                            onclick="{() => removeIndexTable(i)}"
-                                            class="text-white bg-danger box-border border border-transparent hover:bg-danger-strong focus:ring-4 focus:ring-danger-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-                                        <img src="/icon/trash.svg" class="h-6 w-6 p-1 justify-center"
-                                             alt="Tauri Logo"/>
+                                <td class="p-2">
+                                    <button onclick={() => { result_data.items.splice(i, 1); result_data.items = result_data.items; calculateTotal(); }} class="p-2 text-red-500 hover:bg-red-50 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
-
                                 </td>
                             </tr>
                         {/each}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                        </tbody>
-                    </table>
-                </div>
-
+        <!-- Footer Actions -->
+        <div class="mt-4 flex justify-between items-center p-4 bg-white rounded-2xl shadow-sm">
+            <div class="flex gap-4 text-sm text-gray-500">
+                <span><kbd class="px-2 py-1 bg-gray-100 border rounded">F8</kbd> Simpan Transaksi</span>
+                <span><kbd class="px-2 py-1 bg-gray-100 border rounded">Esc</kbd> Batalkan</span>
+            </div>
+            <div class="flex gap-3">
+                <button onclick={() => dispatch('close')} class="px-6 py-3 border rounded-xl hover:bg-gray-50 font-bold transition-colors">Batal</button>
+                <button onclick={() => (openModalAdd = true)} class="px-8 py-3 bg-brand text-white rounded-xl hover:bg-brand-strong font-bold shadow-lg shadow-brand/20 transition-all">
+                    Simpan (F8)
+                </button>
             </div>
         </div>
     </div>
+{/if}
+
+{#if openModalAdd}
+    <ModalAdd
+        open={openModalAdd}
+        res={result_data}
+        onclose={handlerCloseModalSave}
+        onsave={handleSaveSuccess}
+    />
+{/if}
+
+{#if openModalSearch}
+    <ModalSearchItem 
+        open={openModalSearch} 
+        onselect={handleItemSelected} 
+        onclose={() => openModalSearch = false} 
+    />
 {/if}

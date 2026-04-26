@@ -14,11 +14,19 @@
         headers = [
             {name: 'Name', value: 'name'},
             {name: 'Age', value: 'age'},
-            // {name: 'Tabungan', value: "tabungan", type_data: 'parseIDR'},
-            // {name: 'Date', value: 'date', type_data: 'date'}
-        ]
+        ],
+        page = 1,
+        totalPages = 1,
+        totalItems = 0,
+        onPageChange
 
     } = $props()
+
+    function handlePageChange(newPage) {
+        if (newPage >= 1 && newPage <= totalPages && onPageChange) {
+            onPageChange(newPage);
+        }
+    }
 
     function getValue(item, path) {
         let splitText = path.split(".");
@@ -152,9 +160,37 @@
 
 				</tbody>
 			</table>
+		<div class="flex items-center justify-between mt-4 px-2">
+			<div class="text-sm text-gray-700">
+				Menampilkan <span class="font-semibold text-gray-900">{data.length}</span> dari <span class="font-semibold text-gray-900">{totalItems}</span> data
+			</div>
+			
+			<div class="inline-flex items-center -space-x-px">
+				<button 
+					onclick={() => handlePageChange(page - 1)}
+					disabled={page <= 1}
+					class="flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+					Prev
+				</button>
+				
+				<div class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-t border-b border-gray-300">
+					Halaman <span class="text-brand font-bold">{page}</span> dari {totalPages}
+				</div>
+				
+				<button 
+					onclick={() => handlePageChange(page + 1)}
+					disabled={page >= totalPages}
+					class="flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					Next
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+				</button>
+			</div>
 		</div>
-
 	</div>
+</div>
 </div>
 
 

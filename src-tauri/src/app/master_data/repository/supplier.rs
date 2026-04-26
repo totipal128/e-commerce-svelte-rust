@@ -11,6 +11,7 @@ pub async fn get_list_supplier(mut filter: Option<Filter>) -> Result<Pagination<
     };
 
     Ok(qs
+        .order("id DESC")
         .find_by_pagination(page, page_size)
         .await
         .map_err(|e| e.to_string())?)

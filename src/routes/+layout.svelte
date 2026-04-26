@@ -2,38 +2,44 @@
     import "../app.css";
     import "../app.js"
     import Sidebar from "$lib/component/Sidebar.svelte"
+    import Navbar from "$lib/component/Navbar.svelte"
+	import ErrConnection from "$lib/component/err/ErrConnection.svelte";
+	import Toast from "$lib/component/Toast.svelte";
+    import { invoke } from "@tauri-apps/api/core";
+    import { onMount } from "svelte";
+    import { afterNavigate } from "$app/navigation";
 
-    let hiddenDropDownSetting = $state(true);
+    let isDbConnected = $state(true);
 
-    function toggleDropDownSetting() {
-        hiddenDropDownSetting = !hiddenDropDownSetting;
+    async function checkDb() {
+        try {
+            isDbConnected = await invoke("check_db_connection");
+        } catch (error) {
+            console.error("DB Check error:", error);
+            isDbConnected = false;
+        }
     }
+
+    onMount(() => {
+        checkDb();
+    });
+
+    afterNavigate(() => {
+        checkDb();
+    });
 </script>
 
-
-<div class="text-gray-800 h-full w-full overflow-y-auto">
-	<nav class="bg-white h-15 shadow-md">
-		<div class="flex flex-row">
-			<div class="basis-1/3">
-				icon
-			</div>
-			<div class="basis-2/3">
-				<div class="flex flex-row-reverse">
-					<p class="pr-5 pt-5 p-3">Totipal etc</p>
-					<div class="bg-white h-12 w-12 mt-1 rounded-full">
-						<img src="/tauri.svg" class="h-10 w-10 p-1 justify-center" alt="Tauri Logo"/>
-					</div>
-				</div>
-			</div>
-		</div>
-	</nav>
-	<div class="flex bg-gray-300 overflow-y-auto" style="height: 93.4vh">
-		<Sidebar/>
-
-		<slot/>
-
-	</div>
-	<footer class="absolute  bottom-0 bg-gray-500 h-10 w-full">
-		footer
-	</footer>
-</div>
+<Toast />
+{#if !isDbConnected}
+    <ErrConnection on:check={checkDb} />
+{:else}
+    <div class="text-gray-800 h-screen w-full flex flex-col overflow-hidden">
+        <Navbar user="Administrator" />
+        <div class="flex flex-1 overflow-hidden">
+            <Sidebar/>
+            <main class="flex-1 overflow-y-auto bg-gray-100">
+                <slot/>
+            </main>
+        </div>
+    </div>
+{/if}

@@ -1,6 +1,7 @@
 <script>
     import {createEventDispatcher, onMount, tick} from 'svelte';
     import {invoke} from "@tauri-apps/api/core";
+    import Receipt from '$lib/component/Receipt.svelte';
 
     const dispatch = createEventDispatcher();
     let relationItems = [];
@@ -58,17 +59,21 @@
     function handlerClose() {
         dispatch("close", false);
     }
+
+    function handlePrint() {
+        window.print();
+    }
 </script>
 
-<div class="absolute bg-black w-screen h-screen z-11 top-0" style="opacity: 0.95">
+<div onclick={handlerClose} class="absolute bg-black w-screen h-screen z-11 top-0" style="opacity: 0.95">
 </div>
-<div class="absolute inset-0 flex items-center justify-center z-[11] " on:click={handlerClose}>
-	<div class=" bg-white min-w-200  rounded-2xl" on:click|stopPropagation>
+<div class="absolute inset-0 flex items-center justify-center z-[11] " onclick={handlerClose}>
+	<div class=" bg-white min-w-200  rounded-2xl" onclick={(e) => e.stopPropagation()}>
 		<div class="relative flex items-center justify-center py-6 ">
 			<span class="text-3xl font-semibold">Detail Data</span>
 
 			<button
-					on:click={handlerClose}
+					onclick={handlerClose}
 					class="absolute right-4 top-4 hover:bg-gray-200 p-3 rounded-full"
 			>
 				X
@@ -181,11 +186,21 @@
 		<!-- FOOTER -->
 		<div class=" p-4 flex justify-center gap-3">
 			<button
-					on:click={handlerClose}
+					onclick={handlePrint}
+					class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+				Cetak Struk
+			</button>
+			<button
+					onclick={handlerClose}
 					class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
 			>
 				Close
 			</button>
 		</div>
 	</div>
+</div>
+
+<div class="hidden print:block">
+    <Receipt data={get_detail_data} />
 </div>

@@ -5,6 +5,7 @@
 
     import {invoke} from "@tauri-apps/api/core";
     import {onMount} from "svelte";
+    import {showToast} from "$lib/store/toast.js";
 
     let {
         open = false,
@@ -41,9 +42,11 @@
             })
 
             data = result.results
+            showToast("Berhasil menyimpan data barang", "success");
 
         } catch (err) {
             console.log("err", err)
+            showToast("Gagal menyimpan data: " + err, "error");
         } finally {
             closeModal()
             loading = false;

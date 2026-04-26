@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
 #[derive(Clone, Default, FromRow, Debug, Serialize, Deserialize)]
-struct checkCodeSale {
+struct CheckCodeSale {
     pub code: String,
 }
-impl Model for checkCodeSale {
+impl Model for CheckCodeSale {
     const TABLE: &'static str = "sale";
     const FIELDS_INSERT: &'static [&'static str] = &[];
 }
@@ -18,11 +18,11 @@ pub async fn get_code_trx() -> Result<String, String> {
     let date_now = Local::now().format("%Y%m%d").to_string();
     let format_data = format!("TRX-{}", date_now);
 
-    let _qs1 = QueryBuilderPostgrest::<checkCodeSale>::new()
+    let qs1 = QueryBuilderPostgrest::<CheckCodeSale>::new()
         .debug()
         .fetch_raw(
             format!(
-                "SELECT  code FROM sale  WHERE code ilike '{}%' ORDER BY id DESC LIMIT 1",
+                "SELECT code FROM sale WHERE code ilike '{}%' ORDER BY id DESC LIMIT 1",
                 format_data
             )
             .as_str(),
@@ -30,14 +30,15 @@ pub async fn get_code_trx() -> Result<String, String> {
         .await
         .map_err(|e| e.to_string())?;
 
-    if _qs1.len() > 0 {
-        let code_split = _qs1[0].code.split('-').collect::<Vec<&str>>();
+    if !qs1.is_empty() {
+        let code_split = qs1[0].code.split('-').collect::<Vec<&str>>();
         println!("{:?}", code_split);
-        if code_split.len() > 0 {
+        if !code_split.is_empty() {
+            let last_val = code_split[code_split.len() - 1].parse::<i32>().unwrap_or(0);
             return Ok(format!(
                 "{}-{}",
                 format_data,
-                code_split[code_split.len() - 1].parse::<i32>().unwrap() + 1
+                last_val + 1
             ));
         }
     }
@@ -46,16 +47,24 @@ pub async fn get_code_trx() -> Result<String, String> {
 }
 
 pub async fn get_list_sale(mut filter: Option<Filter>) -> Result<Pagination<Sale>, String> {
-    let qs = QueryBuilderPostgrest::<Sale>::new();
+    let mut qs = QueryBuilderPostgrest::<Sale>::new();
 
     let (page, page_size) = match filter.as_mut() {
-        Some(f) => (f.page.unwrap_or(1), f.page_size.unwrap_or(10)),
+        Some(f) => {
+            if let Some(s) = &f.search {
+                if !s.is_empty() {
+                    qs = qs.where_str(format!("(sale.code ILIKE '%{}%' OR c.name ILIKE '%{}%')", s, s).as_str());
+                }
+            }
+            (f.page.unwrap_or(1), f.page_size.unwrap_or(10))
+        }
         None => (1, 10),
     };
 
     Ok(qs
         .select("sale.*, c.name as consumer")
         .join("left join customer c on c.id = sale.customer_id")
+        .order("sale.id DESC")
         .find_by_pagination(page, page_size)
         .await
         .map_err(|e| e.to_string())?)
@@ -120,6 +129,13 @@ pub async fn create_sale(mut data: SaleDetail) -> Result<Sale, String> {
 
             i.sale_id = result.id;
             create__sale_item(i).await.map_err(|e| e.to_string())?;
+
+            // Reduce stock in items table
+            if let (Some(item_id), Some(unit), Some(qty)) = (i.items_id, &i.items_unit, i.qty) {
+                crate::app::master_data::repository::items_repo::reduce_stock(item_id, unit, qty)
+                    .await
+                    .map_err(|e| e.to_string())?;
+            }
         }
     }
 
@@ -285,7 +301,7 @@ pub async fn update__sale_item(data: &SaleItem) -> Result<SaleItem, String> {
     Ok(result)
 }
 
-pub async fn delete__sale_item(id: i32) -> Result<String, String> {
+pub async fn delete_sale_item(id: i32) -> Result<String, String> {
     let result = QueryBuilderPostgrest::<SaleItem>::new()
         .where_clause_i32("id", id)
         .delete()

@@ -10,19 +10,19 @@
         title = "",
     } = $props()
 
+    import { showToast } from "$lib/store/toast.js";
+
     async function remove_data() {
         loading = true
         try {
-            const result = await invoke("sale_delete", {
-                id: id
-            })
-
+            await invoke("sale_delete", { id });
+            showToast("Berhasil menghapus transaksi penjualan", "success");
         } catch (err) {
-            console.log("err", err)
+            console.error(err);
+            showToast("Gagal menghapus transaksi: " + err, "error");
         } finally {
             loading = false;
         }
-
     }
 
     // onMount(detail_data)

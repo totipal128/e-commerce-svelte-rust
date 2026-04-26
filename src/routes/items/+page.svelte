@@ -21,7 +21,13 @@
     // ]
     let loading = $state(true)
     let data = $state([])
-    let searchDb = $state(null)
+    let searchDb = $state("")
+
+    // Pagination state
+    let currentPage = $state(1);
+    let totalPages = $state(1);
+    let totalItems = $state(0);
+    let pageSize = $state(10);
 
     function search(e) {
         // e.preventDefault();
@@ -41,17 +47,25 @@
             const result = await invoke("items_get", {
                 filter: {
                     search: searchDb,
+                    page: currentPage,
+                    page_size: pageSize
                 }
             })
 
             data = result.results
-
+            totalPages = result.total_page;
+            totalItems = result.count;
+            currentPage = result.page;
         } catch (err) {
             console.log("err", err)
         } finally {
             loading = false;
         }
+    }
 
+    function handlePageChange(newPage) {
+        currentPage = newPage;
+        fetchData();
     }
 
     onMount(fetchData)
@@ -152,6 +166,16 @@
 		</div>
 
 
-		<Table headers={headers} data={data} on:detail={handlerDetail} on:remove={handlerRemove} on:update={handlerUpdate}/>
+		<Table 
+            headers={headers} 
+            data={data} 
+            page={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            onPageChange={handlePageChange}
+            on:detail={handlerDetail} 
+            on:remove={handlerRemove} 
+            on:update={handlerUpdate}
+        />
 	{/if}
 </div>
