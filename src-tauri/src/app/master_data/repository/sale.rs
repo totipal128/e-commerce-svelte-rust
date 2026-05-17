@@ -89,37 +89,29 @@ pub async fn get_detail_sale_by_id(id: i32) -> Result<SaleDetail, String> {
 }
 
 pub async fn create_sale(mut data: SaleDetail) -> Result<Sale, String> {
-    let mut qs = QueryBuilderPostgrest::<Sale>::new();
+    let pool = crate::base::database::postgres::conn::db_pool()
+        .await
+        .map_err(|e| e.to_string())?;
 
-    if data.code.is_some() {
-        qs = qs.insert_str("code", data.code.as_ref().unwrap());
-    }
-    if data.customer_id.is_some() {
-        qs = qs.insert_i32("customer_id", data.customer_id.unwrap());
-    }
-    if data.ppn.is_some() {
-        qs = qs.insert_f64("ppn", data.ppn.unwrap());
-    }
-    if data.discount.is_some() {
-        qs = qs.insert_f64("discount", data.discount.unwrap());
-    }
-    if data.total_item.is_some() {
-        qs = qs.insert_i32("total_item", data.total_item.unwrap());
-    }
-    if data.total.is_some() {
-        qs = qs.insert_f64("total", data.total.unwrap());
-    }
-    if data.change.is_some() {
-        qs = qs.insert_f64("change", data.change.unwrap());
-    }
-    if data.payment.is_some() {
-        qs = qs.insert_f64("payment", data.payment.unwrap());
-    }
-    if data.created_by_id.is_some() {
-        qs = qs.insert_i32("created_by_id", data.created_by_id.unwrap());
-    }
+    let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
 
-    let result = qs.create().await.map_err(|e| e.to_string())?;
+    let result = sqlx::query_as::<_, Sale>(
+        "INSERT INTO sale (code, customer_id, ppn, discount, total_item, total, change, payment, created_by_id) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) \
+         RETURNING *"
+    )
+    .bind(&data.code)
+    .bind(data.customer_id)
+    .bind(data.ppn)
+    .bind(data.discount)
+    .bind(data.total_item)
+    .bind(data.total)
+    .bind(data.change)
+    .bind(data.payment)
+    .bind(data.created_by_id)
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(|e| e.to_string())?;
 
     if let Some(items) = &mut data.items {
         for i in items.iter_mut() {
@@ -128,16 +120,50 @@ pub async fn create_sale(mut data: SaleDetail) -> Result<Sale, String> {
             }
 
             i.sale_id = result.id;
-            create__sale_item(i).await.map_err(|e| e.to_string())?;
 
-            // Reduce stock in items table
+            // Insert into sale_items inside transaction
+            sqlx::query_as::<_, SaleItem>(
+                "INSERT INTO sale_items (sale_id, items_id, items_name, items_unit, items_price, total, qty) \
+                 VALUES ($1, $2, $3, $4, $5, $6, $7) \
+                 RETURNING *"
+            )
+            .bind(i.sale_id)
+            .bind(i.items_id)
+            .bind(&i.items_name)
+            .bind(&i.items_unit)
+            .bind(i.items_price)
+            .bind(i.total)
+            .bind(i.qty)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+
+            // Reduce stock in items table inside transaction
             if let (Some(item_id), Some(unit), Some(qty)) = (i.items_id, &i.items_unit, i.qty) {
-                crate::app::master_data::repository::items_repo::reduce_stock(item_id, unit, qty)
+                // Get content conversion factor
+                let content: i32 = sqlx::query_scalar(
+                    "SELECT coalesce(content, 1) FROM items_price WHERE item_id = $1 AND type_unit = $2"
+                )
+                .bind(item_id)
+                .bind(unit)
+                .fetch_one(&mut *tx)
+                .await
+                .map_err(|e| e.to_string())?;
+
+                let total_reduce = qty * content;
+
+                // Update items table
+                sqlx::query("UPDATE items SET qty_stock = qty_stock - $1 WHERE id = $2")
+                    .bind(total_reduce)
+                    .bind(item_id)
+                    .execute(&mut *tx)
                     .await
                     .map_err(|e| e.to_string())?;
             }
         }
     }
+
+    tx.commit().await.map_err(|e| e.to_string())?;
 
     Ok(result)
 }

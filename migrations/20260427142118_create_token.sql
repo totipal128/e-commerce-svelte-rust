@@ -7,7 +7,7 @@ CREATE TABLE tokens
     refresh_token         VARCHAR(255)                                         DEFAULT NULL,
     expired_access_token  TIMESTAMPTZ                                          DEFAULT NOW(),
     expired_refresh_token TIMESTAMPTZ                                          DEFAULT NOW(),
-    otp                   VARCHAR(6)                                              DEFAULT NULL,
+    otp                   VARCHAR(6)                                           DEFAULT NULL,
     expired_otp           TIMESTAMPTZ                                          DEFAULT NOW(),
     user_agent            VARCHAR(255)                                         DEFAULT NULL, -- untuk mobile atau desktop
     ip_address            VARCHAR(255)                                         DEFAULT NULL,

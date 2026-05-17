@@ -6,9 +6,7 @@ CREATE TABLE purchase
     suppliers_id  INTEGER REFERENCES suppliers (id) ON DELETE SET NULL DEFAULT NULL,
     total_item    INTEGER                                              DEFAULT 0,
     total         FLOAT                                                DEFAULT 0,
-
     created_by_id INTEGER REFERENCES users (id) ON DELETE SET NULL     DEFAULT NULL,
-
     created_at    TIMESTAMPTZ                                          DEFAULT NOW(),
     updated_at    TIMESTAMPTZ                                          DEFAULT NOW(),
     deleted_at    TIMESTAMPTZ                                          DEFAULT NULL
@@ -22,7 +20,6 @@ CREATE TABLE purchase_items
     price_buy   FLOAT       DEFAULT 0,
     price_sale  FLOAT       DEFAULT 0,
     qty         INTEGER     DEFAULT 0,
-
     created_at  TIMESTAMPTZ DEFAULT NOW(),
     updated_at  TIMESTAMPTZ DEFAULT NOW(),
     deleted_at  TIMESTAMPTZ DEFAULT NULL
