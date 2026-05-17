@@ -1,6 +1,7 @@
 <script>
     import {invoke} from "@tauri-apps/api/core";
     import {onMount} from "svelte";
+    import {showToast} from "$lib/store/toast.js";
     import ModalRemove from "./ModalRemove.svelte"
     import ModalAdd from "./ModalAdd.svelte"
     import ModalUpdate from "./ModalUpdate.svelte"
@@ -12,10 +13,12 @@
         {name: 'Nama Lengkap', value: 'name'},
         {name: 'Email', value: 'email'},
         {name: 'HP', value: 'no_handphone'},
-        {name: 'Kode Unix / Barcode', value: 'barcode'}
+        {name: 'Kode Unix / Barcode', value: 'barcode'},
+        {name: 'Peran / Role', value: 'role'}
     ]
     
     let loading = $state(true)
+    /** @type {any[]} */
     let data = $state([])
     let searchDb = $state("")
 
@@ -25,6 +28,9 @@
     let totalItems = $state(0);
     let pageSize = $state(10);
 
+    /**
+     * @param {any} e
+     */
     function search(e) {
         if (e.key === "Enter" || e === "enter") {
             if (e === "enter") {
@@ -58,6 +64,9 @@
         }
     }
 
+    /**
+     * @param {number} newPage
+     */
     function handlePageChange(newPage) {
         currentPage = newPage;
         fetchData();
@@ -70,6 +79,9 @@
     let openModalUpdate = $state(false)
     let removeIsOpen = $state(false)
 
+    /**
+     * @param {any} e
+     */
     function handlerRemove(e) {
         removeIsOpen = !removeIsOpen
         if (e.detail !== null) {
@@ -78,6 +90,9 @@
         }
     }
 
+    /**
+     * @param {any} e
+     */
     function handlerAdd(e) {
         openModalAdd = !openModalAdd
         if (e.detail !== null) {
@@ -86,12 +101,36 @@
         }
     }
 
+    /**
+     * @param {any} e
+     */
     function handlerUpdate(e) {
         openModalUpdate = !openModalUpdate
         if (e.detail !== null) {
             idData = e.detail.id
         } else {
             fetchData()
+        }
+    }
+
+    async function handlerReseed() {
+        if (!confirm("Apakah Anda yakin ingin memuat ulang database default users? Seluruh data password default ('admin123', 'kasir123', 'gudang123') dan relasi perannya akan disetel kembali secara default.")) {
+            return;
+        }
+        loading = true;
+        try {
+            const res = await invoke("reseed_database_users");
+            if (res.success) {
+                showToast(res.message || "Berhasil memuat ulang default users", "success");
+            } else {
+                showToast(res.message || "Gagal memuat ulang data", "error");
+            }
+            await fetchData();
+        } catch (err) {
+            console.error(err);
+            showToast("Terjadi kesalahan sistem saat memuat ulang data.", "error");
+        } finally {
+            loading = false;
         }
     }
 
@@ -114,8 +153,14 @@
 		</div>
 	{:else}
 		<div class="flex justify-between">
-			<div class="ml-5 mt-3 flex">
+			<div class="ml-5 mt-3 flex gap-2">
 				<button onclick={handlerAdd} type="button" class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Tambah Pengguna</button>
+				<button onclick={handlerReseed} type="button" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 border border-emerald-200 shadow-xs font-semibold leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none flex items-center gap-1.5 transition-all">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89L21 9m-9 5a3 3 0 110-6 3 3 0 010 6z" />
+					</svg>
+					Muat Ulang Default Users
+				</button>
 			</div>
 
 			<form class="mt-3 mr-5 w-100" onsubmit={(e)=>(search("enter"))}>

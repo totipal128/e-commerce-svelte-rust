@@ -1,224 +1,169 @@
+# E-Commerce Svelte + Rust (Tauri Desktop App)
 
-## started tauri developer
-install nvm via brew
+Sistem Kasir & Manajemen E-Commerce berbasis desktop modern yang dibangun menggunakan perpaduan **Svelte 5** (Frontend) dan **Rust / Tauri** (Backend).
 
-```
+## 🚀 Persiapan & Instalasi (Development Setup)
+
+### 1. Prerequisites (Node.js & NVM)
+Aplikasi ini membutuhkan Node.js (via NVM direkomendasikan):
+```bash
 brew install nvm
 
-# add direktori nvm and add source to .zshrc
+# Tambahkan direktori NVM ke konfigurasi shell (.zshrc)
 mkdir ~/.nvm
 echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.zshrc
 echo 'source $(brew --prefix nvm)/nvm.sh' >> ~/.zshrc
 source ~/.zshrc
 
-```
-
-install node(include npm)
-``` bash
+# Install Node.js LTS
 nvm install --lts
-```
-verify instalation node and npm
-``` bash
+
+# Verifikasi instalasi
 node -v
 npm -v
 ```
 
-install tauri cli
-``` bash
+### 2. Install Tauri CLI & Jalankan Aplikasi
+```bash
 npm install --save-dev @tauri-apps/cli
-```
-
-try run taury
-``` bash
 npm run tauri dev
 ```
 
+---
 
+## 💾 Arsitektur Database (PostgreSQL & SQLx)
 
-# Tauri + SvelteKit
+Aplikasi ini menggunakan PostgreSQL dengan **SQLx** sebagai *Query Builder* & *Migration System* di sisi Rust.
 
-This template should help get you started developing with Tauri and SvelteKit in Vite.
+### Relasi Entitas Master Data (Barang)
+Berikut adalah struktur relasi (*Entity Relationship*) untuk modul manajemen persediaan barang:
 
-## Recommended IDE Setup
+```mermaid
+erDiagram
+    JENIS_BARANG ||--o{ BARANG : "memiliki (1:N)"
+    SATUAN_BARANG ||--o{ BARANG : "menjadi satuan utama (1:N)"
+    SATUAN_BARANG ||--o{ HARGA_BARANG : "menjadi satuan (1:N)"
+    SATUAN_BARANG ||--o{ HARGA_BARANG : "menjadi induk satuan (1:N)"
+    BARANG ||--|{ HARGA_BARANG : "mempunyai list harga (1:N)"
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+    JENIS_BARANG {
+        int id PK
+        string name "Contoh: Makanan"
+    }
 
-# BACKEND - RUST
+    SATUAN_BARANG {
+        int id PK
+        string name "Contoh: PCS, BOX"
+    }
 
-## CONNECTION DB
+    BARANG {
+        int id PK
+        string barcode
+        string name
+        int qty_stock
+        int items_category_id FK
+        string type_unit FK
+    }
 
-### SQLX - rust => library orm databases rust
+    HARGA_BARANG {
+        int id PK
+        int item_id FK
+        string type_unit FK
+        string parent_type_unit FK
+        int content "Konversi isi (contoh: 1 BOX = 10 PCS)"
+        float price_buy
+        float price_sell
+    }
+```
+*Catatan: Konfigurasi harga barang sengaja dipisahkan ke tabel `items_price` (`HARGA_BARANG`) agar sistem mendukung harga bertingkat dan konversi satuan secara dinamis (contoh: bisa mendeteksi penjualan eceran vs karton secara akurat untuk memotong stok `qty_stock`).*
 
-- instal sqlx
-
+### Panduan Migrasi SQLx
 ```bash
+# Install CLI SQLx (jika belum)
 cargo install sqlx-cli --features postgres
-```
 
-- buat table migration di sqlx rust
+# Membuat file migrasi baru
+sqlx migrate add nama_file_migrasi
 
-```angular2html
-sqlx migrate add create_users_table
-```
-
----
-contoh create table item and item_type
-
-```angular2html
-CREATE TABLE items_type
-(
-id         SERIAL PRIMARY KEY,
-name       TEXT NOT NULL,
-
-created_at TIMESTAMPTZ DEFAULT NOW(),
-updated_at TIMESTAMPTZ DEFAULT NOW(),
-deleted_at TIMESTAMPTZ DEFAULT NULL
-);
-
--- 2. Buat tabel items
-CREATE TABLE items
-(
-id            SERIAL PRIMARY KEY,
-barcode       TEXT    NOT NULL UNIQUE,
-name          TEXT    NOT NULL,
-items_type_id INTEGER REFERENCES items_type (id) ON DELETE SET NULL,
-created_by    INTEGER,
-
-created_at    TIMESTAMPTZ DEFAULT NOW(),
-updated_at    TIMESTAMPTZ DEFAULT NOW(),
-deleted_at    TIMESTAMPTZ DEFAULT NULL
-);
-```
-
----
-contoh menambahkan field pada table items
-
-```angular2html
-ALTER TABLE items
-ADD COLUMN IF NOT EXISTS stoct INT DEFAULT 0;
-```
-
-- migrate sqlx
-
-```bash
+# Menjalankan migrasi ke database (Update)
 sqlx migrate run 
-```
 
-untuk migrasi ke databases
-
-```bash
+# Membatalkan migrasi terakhir (Rollback)
 sqlx migrate revert
 ```
 
-untuk membatalkan migrasi terakhir
+---
 
-## IMPLEMTASI CRUD ORM
+## 🛠 Panduan Backend & Custom ORM (Rust)
 
-unuk melakukan implemetasi (create, read, update, delete) dengan
-<br>
-import data dari module database postgres
-[use crate::base::database::postgres::orm::QueryBuilderPostgrest]();
+Aplikasi ini menggunakan sistem ORM fungsional buatan sendiri yang bernama `QueryBuilderPostgrest` untuk menyederhanakan proses CRUD ke PostgreSQL.
 
-### Example Model User
-
-```angular2html
+### 1. Definisi Model
+Setiap tabel harus mendefinisikan implementasi trait `Model`.
+```rust
+use crate::base::database::postgres::orm::{Model, QueryBuilderPostgrest};
 
 #[derive(Clone, Default, FromRow, Debug)]
 struct User {
-pub id: i32,
-pub username: String,
-pub email: String,
-pub password: String,
-
-pub name: Option<String>,
-pub address: Option<String>,
-pub no_handphone: Option<String>,
-pub barcode: Option<String>,
-
-pub created_at: DateTime<Local>,
-pub updated_at: DateTime<Local>,
-pub deleted_at: Option<DateTime<Local>>,
+    pub id: i32,
+    pub username: String,
+    pub email: String,
+    // ... field lainnya
 }
 
 impl Model for User {
-const TABLE: &'static str = "users";
-const FIELDS: &'static [&'static str] = &[
-stringify!(username),
-stringify!(email),
-stringify!(password),
-stringify!(name),
-stringify!(address),
-stringify!(no_handphone),
-stringify!(barcode),
-];
+    const TABLE: &'static str = "users";
+    const FIELDS: &'static [&'static str] = &[
+        stringify!(username),
+        stringify!(email),
+        // ... (Pastikan urutan sama dengan saat eksekusi .values() di method Create)
+    ];
 }
 ```
 
-### Read
+### 2. Contoh Penggunaan ORM (CRUD)
 
-example read pagination
-
-```angular2html
-#[tokio::test]
-async fn test_query_read_pagination() {
+**READ (Pagination):**
+```rust
 let results = QueryBuilderPostgrest::<User>::new()
-.find_by_pagination(1, 10)
-.await;
-
-println!("{:?}", results);
-}
-
+    .find_by_pagination(1, 10) // Page 1, 10 item
+    .await;
 ```
 
-example read all
-
-```angular2html
-#[tokio::test]
-async fn test_query_read_all() {
+**READ (All with Where Clause):**
+```rust
 let results = QueryBuilderPostgrest::<User>::new()
-.where_clause("username='toti' ")
-.find_all()
-.await;
-
-println!("{:?}", results);
-}
-
+    .where_clause("username='toti'")
+    .find_all()
+    .await;
 ```
 
-example read first terbaru
-
-```angular2html
-#[tokio::test]
-async fn test_query_one_first() {
-let results = QueryBuilderPostgrest::<User>::new().find_one_first().await;
-
-println!("{:?}", results);
-}
-
+**READ (First Record):**
+```rust
+let results = QueryBuilderPostgrest::<User>::new()
+    .find_one_first()
+    .await;
 ```
 
-### Create
-
-example
-
-```angular2html
-#[tokio::test]
-async fn test_query_create() {
+**CREATE (Menggunakan vector values):**
+```rust
 let create = QueryBuilderPostgrest::<User>::new()
-.values(vec![
-"toti",
-"toti@ecxample.com",
-"password",
-"nama toti",
-"alamat",
-"no_handphone",
-"NULL",
-])
-.create()
-.await;
-
-println!("{:?}", create);
-}
+    .values(vec![
+        "toti",
+        "toti@example.com",
+        "password",
+        // ... (Nilai harus di-passing secara urut sesuai dengan const FIELDS pada impl Model)
+    ])
+    .create()
+    .await;
 ```
 
-urutan value berdasarkan urutan FIELD dari model impl MODEL user
+---
+
+## 💡 Recommended IDE Setup
+Agar pengalaman ngoding lebih maksimal, disarankan menggunakan:
+- [VS Code](https://code.visualstudio.com/)
+- **Ekstensi Wajib**: 
+  - [Svelte for VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode)
+  - [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode)
+  - [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)

@@ -31,13 +31,17 @@
     );
     let {
         id = 0,
+        onclose,
     } = $props()
 
-    async function detail_data() {
+    /**
+     * @param {number} targetId
+     */
+    async function detail_data(targetId) {
         loading = true
         try {
             const result = await invoke("sale_by_id", {
-                id: id
+                id: targetId
             })
 
             get_detail_data = result.data;
@@ -49,15 +53,26 @@
 
     }
 
-    onMount(detail_data)
+    $effect(() => {
+        if (id > 0) {
+            detail_data(id);
+        }
+    });
 
+    /**
+     * @param {any} v
+     */
     function parseNumber(v) {
         if (!v) return 0;
         return Number(v.toString().replace(/\./g, ""));
-    };
+    }
 
     function handlerClose() {
-        dispatch("close", false);
+        if (onclose) {
+            onclose();
+        } else {
+            dispatch("close", false);
+        }
     }
 
     function handlePrint() {

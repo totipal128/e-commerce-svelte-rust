@@ -3,6 +3,7 @@
     import { tick } from "svelte";
     import Receipt from "$lib/component/Receipt.svelte";
     import { showToast } from "$lib/store/toast.js";
+    import { authStore } from "$lib/store/auth.js";
 
     let { res, open = false, onclose, onsave } = $props();
 
@@ -20,6 +21,7 @@
         res.change = (Number(res.payment) || 0) - res.total;
     }
 
+    // ===== set exact =====
     function setExact() {
         res.payment = res.total;
         res.change = 0;
@@ -31,11 +33,17 @@
         try {
             const cleanData = {
                 ...res,
+                created_by_id: $authStore.user?.id || null,
                 items: res.items.filter(i => i.items_id != null)
             };
-            await invoke("sale_create", { data: cleanData });
+            if (res.id && res.id > 0) {
+                await invoke("sale_update", { data: cleanData });
+                showToast("Transaksi berhasil diubah!", "success");
+            } else {
+                await invoke("sale_create", { data: cleanData });
+                showToast("Transaksi berhasil disimpan!", "success");
+            }
             successfullySaved = true;
-            showToast("Transaksi berhasil disimpan!", "success");
             if (onsave) onsave();
         } catch (err) {
             console.error(err);

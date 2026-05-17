@@ -3,7 +3,7 @@ use crate::app::master_data::model::items::{
     ItemPrice, Items, ItemsCreate, ItemsDetail, ItemsFilter, ItemsList,
 };
 use crate::app::master_data::repository::item_price::{
-    create_items_price, delete_item_price__by_item_id, get_items_price_by_item_id,
+    create_items_price, get_items_price_by_item_id,
 };
 use crate::base::database::postgres::orm::{Pagination, QueryBuilderPostgrest};
 
@@ -11,19 +11,24 @@ pub async fn get_all_items(
     mut filter: Option<ItemsFilter>,
 ) -> Result<Pagination<ItemsList>, String> {
     let mut qs = QueryBuilderPostgrest::<ItemsList>::new()
-        .select("items.*, ip.price_sell, ip.price_buy")
+        .select("items.*, jenis.name as jenis_barang_name, ip.price_sell, ip.price_buy")
         .join(
             "left join items_price ip on items.id = ip.item_id AND items.type_unit = ip.type_unit",
-        );
+        )
+        .join("left join jenis_barang jenis on items.jenis_barang_id = jenis.id");
 
     let (page, page_size) = match filter.as_mut() {
         Some(f) => (f.page.unwrap_or(1), f.page_size.unwrap_or(10)),
         None => (1, 10),
     };
 
-    if filter.is_some() {
-        if filter.as_mut().unwrap().search.is_some() {
-            qs = qs.ilike("name", filter.unwrap().search.unwrap().as_str())
+    if let Some(f) = filter.as_ref() {
+        if let Some(s) = f.search.as_ref() {
+            if !s.trim().is_empty() {
+                qs = qs
+                    .ilike("items.barcode", s.as_str())
+                    .ilike("items.name", s.as_str());
+            }
         }
     }
 
@@ -37,6 +42,8 @@ pub async fn get_by_id(id: i32) -> Result<ItemsDetail, String> {
     let mut qs = QueryBuilderPostgrest::<ItemsDetail>::new();
 
     let mut result = qs
+        // .select("items.*, jenis.name as jenis_barang_name")
+        // .join("left join jenis_barang jenis on items.jenis_barang_id = jenis.id")
         .where_clause_i32("id", id)
         .find_one()
         .await
@@ -60,8 +67,8 @@ pub async fn create_item(item: ItemsCreate) -> Result<Items, String> {
     if item.type_unit.is_some() {
         qs = qs.insert_str("type_unit", item.type_unit.as_ref().unwrap());
     }
-    if item.items_category_id.is_some() {
-        qs = qs.insert_i32("items_category_id", item.items_category_id.unwrap())
+    if item.jenis_barang_id.is_some() {
+        qs = qs.insert_i32("jenis_barang_id", item.jenis_barang_id.unwrap())
     }
     if item.qty_stock.is_some() {
         qs = qs.insert_i32("qty_stock", item.qty_stock.unwrap())
@@ -111,6 +118,8 @@ pub async fn update_item(item: ItemsDetail) -> Result<ItemsDetail, String> {
         return Err(String::from("Item ID missing"));
     }
 
+    println!("items price:{:?}", item);
+
     let mut qs = QueryBuilderPostgrest::<ItemsDetail>::new();
 
     if item.barcode.is_some() {
@@ -122,20 +131,37 @@ pub async fn update_item(item: ItemsDetail) -> Result<ItemsDetail, String> {
     if item.type_unit.is_some() {
         qs = qs.set_str("type_unit", item.type_unit.as_ref().unwrap());
     }
-    if item.items_category_id.is_some() {
-        qs = qs.set_i32("items_category_id", item.items_category_id.unwrap())
+    if item.jenis_barang_id.is_some() {
+        qs = qs.set_i32("jenis_barang_id", item.jenis_barang_id.unwrap())
     }
     if item.qty_stock.is_some() {
         qs = qs.set_i32("qty_stock", item.qty_stock.unwrap())
     }
 
     if let Some(mut price) = item.price.clone() {
+        // Delete prices that are no longer in the request
+        let existing_prices = get_items_price_by_item_id(item.id.unwrap())
+            .await
+            .unwrap_or_default();
+        for ep in existing_prices {
+            if let Some(ep_id) = ep.id {
+                let still_exists = price.iter().any(|p| p.id == Some(ep_id));
+                if !still_exists {
+                    QueryBuilderPostgrest::<ItemPrice>::new()
+                        .where_clause_i32("id", ep_id)
+                        .delete()
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+            }
+        }
+
         let mut k: usize = 0;
         for r in price.iter_mut() {
             k += 1;
             if !r.id.is_some() {
                 r.item_id = item.id;
-                create_items_price(r, k);
+                create_items_price(r, k).await.map_err(|e| e.to_string())?;
                 continue;
             }
             let mut r_p = QueryBuilderPostgrest::<ItemPrice>::new();
@@ -192,7 +218,7 @@ pub async fn get_by_barcode(barcode: String) -> Result<ItemPriceFind, String> {
 
     let mut result = qs
         .model("items i")
-        .select("i.id, ip.barcode, i.name, i.items_category_id, ip.type_unit, ip.price_buy,ip.price_sell, coalesce(i.qty_stock / NULLIF(coalesce(ip.content, 1), 0), 0) as qty")
+        .select("i.id, ip.barcode, i.name, i.jenis_barang_id, ip.type_unit, ip.price_buy,ip.price_sell, coalesce(i.qty_stock / NULLIF(coalesce(ip.content, 1), 0), 0) as qty")
         .join("left join items_price ip ON i.id = ip.item_id")
         .where_clause_str("ip.barcode", barcode.as_str())
         .find_one()
@@ -209,7 +235,7 @@ pub async fn get_by_items_id(items_id: i32) -> Result<Vec<ItemPriceFind>, String
 
     let mut result = qs
         .model("items i")
-        .select("i.id, ip.barcode, i.name, i.items_category_id, ip.type_unit, ip.price_buy,ip.price_sell, coalesce(i.qty_stock / NULLIF(coalesce(ip.content, 1), 0), 0) as qty")
+        .select("i.id, ip.barcode, i.name, i.jenis_barang_id, ip.type_unit, ip.price_buy,ip.price_sell, coalesce(i.qty_stock / NULLIF(coalesce(ip.content, 1), 0), 0) as qty")
         .join("left join items_price ip ON i.id = ip.item_id")
         .where_clause_i32("ip.item_id", items_id)
         .find_all()
@@ -224,12 +250,14 @@ pub async fn reduce_stock(item_id: i32, unit: &str, qty_sold: i32) -> Result<(),
         .map_err(|e| e.to_string())?;
 
     // Get content conversion factor for the unit
-    let content: i32 = sqlx::query_scalar("SELECT coalesce(content, 1) FROM items_price WHERE item_id = $1 AND type_unit = $2")
-        .bind(item_id)
-        .bind(unit)
-        .fetch_one(pool)
-        .await
-        .map_err(|e| e.to_string())?;
+    let content: i32 = sqlx::query_scalar(
+        "SELECT coalesce(content, 1) FROM items_price WHERE item_id = $1 AND type_unit = $2",
+    )
+    .bind(item_id)
+    .bind(unit)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
 
     let total_reduce = qty_sold * content;
 
@@ -248,12 +276,14 @@ pub async fn increase_stock(item_id: i32, unit: &str, qty_bought: i32) -> Result
         .map_err(|e| e.to_string())?;
 
     // Get content conversion factor for the unit
-    let content: i32 = sqlx::query_scalar("SELECT coalesce(content, 1) FROM items_price WHERE item_id = $1 AND type_unit = $2")
-        .bind(item_id)
-        .bind(unit)
-        .fetch_one(pool)
-        .await
-        .map_err(|e| e.to_string())?;
+    let content: i32 = sqlx::query_scalar(
+        "SELECT coalesce(content, 1) FROM items_price WHERE item_id = $1 AND type_unit = $2",
+    )
+    .bind(item_id)
+    .bind(unit)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
 
     let total_increase = qty_bought * content;
 

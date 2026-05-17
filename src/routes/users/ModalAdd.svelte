@@ -3,6 +3,8 @@
     import {invoke} from "@tauri-apps/api/core";
     import {showToast} from "$lib/store/toast.js";
 
+    import { rolesStore } from "$lib/store/role_menus.js";
+
     const dispatch = createEventDispatcher();
 
     let {
@@ -19,6 +21,7 @@
         address: "",
         no_handphone: "",
         barcode: "",
+        role: "kasir",
     })
 
     async function saveData() {
@@ -28,7 +31,7 @@
                 data: usersData
             })
             showToast("Berhasil meregistrasi pengguna baru", "success");
-            closeModal()
+            closeModal(true)
         } catch (err) {
             console.log("err", err)
             showToast("Gagal menyimpan pengguna: " + err, "error");
@@ -37,6 +40,9 @@
         }
     }
 
+    /**
+     * @param {any} confirm
+     */
     function closeModal(confirm) {
         let c = false
         if (typeof (confirm) !== "boolean") {
@@ -45,6 +51,9 @@
         dispatch('close', {confirm: c});
     }
 
+    /**
+     * @param {any} e
+     */
     function save(e) {
         saveData()
     }
@@ -88,6 +97,14 @@
                          <div class="col-span-2 md:col-span-1">
 							<label class="block mb-2 text-sm font-medium text-heading">Barcode (Bila ada)</label>
 							<input bind:value={usersData.barcode} type="text" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs" placeholder="Brcode karyawan..."/>
+						</div>
+                         <div class="col-span-2 md:col-span-1">
+							<label class="block mb-2 text-sm font-medium text-heading">Peran Kerja (Role)</label>
+							<select bind:value={usersData.role} class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3.5 py-3 shadow-xs font-semibold focus:outline-none">
+								{#each $rolesStore as role}
+									<option value={role.code}>{role.name} ({role.code})</option>
+								{/each}
+							</select>
 						</div>
                         <div class="col-span-2">
 							<label class="block mb-2 text-sm font-medium text-heading">Alamat</label>

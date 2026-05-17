@@ -85,33 +85,34 @@
     }
 
     function handlerDetail(e) {
-        openModalDetail = !openModalDetail
-        if (e.detail != null) {
-            idData = e.detail.id
+        if (e && e.detail != null) {
+            idData = e.detail.id;
         }
-        fetchData()
+        openModalDetail = !openModalDetail;
+        fetchData();
         loading = false;
     }
 
     function handlerUpdate(e) {
-        openModalUpdate = !openModalUpdate
-        if (e.detail != null) {
-            idData = e.detail.id
+        if (e && e.detail != null) {
+            idData = e.detail.id;
         }
-        fetchData()
+        openModalUpdate = !openModalUpdate;
+        fetchData();
         loading = false;
     }
 
     function handlerRemove(e) {
-        openModalRemove = !openModalRemove
-        if (e.detail != null && e.detail === "remove") {
-            fetchData()
+        if (e && e.detail != null && e.detail === "remove") {
+            openModalRemove = !openModalRemove;
+            fetchData();
             loading = false;
-            return
-        } else if (e.detail != null) {
-            idData = e.detail.id
-            titleData = e.detail.code
+            return;
+        } else if (e && e.detail != null) {
+            idData = e.detail.id;
+            titleData = e.detail.code;
         }
+        openModalRemove = !openModalRemove;
     }
 
 </script>
@@ -121,13 +122,13 @@
 	<Sale open={true} onclose={handlerAdd}></Sale>
 {/if}
 {#if openModalDetail}
-	<ModalDetail id={idData} on:close={handlerDetail}></ModalDetail>
+	<ModalDetail id={idData} onclose={handlerDetail}></ModalDetail>
 {/if}
 {#if openModalUpdate}
-	<ModalUpdate open={openModalUpdate} id={idData} on:close={handlerUpdate}></ModalUpdate>
+	<ModalUpdate open={openModalUpdate} id={idData} onclose={handlerUpdate}></ModalUpdate>
 {/if}
 {#if openModalRemove}
-	<ModalRemove id={idData} title={titleData} on:close={handlerRemove}></ModalRemove>
+	<ModalRemove id={idData} title={titleData} onclose={handlerRemove}></ModalRemove>
 {/if}
 <div class="w-full">
 	{#if (loading)}

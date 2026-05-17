@@ -37,6 +37,7 @@
                 total: null,
                 qty: null,
                 stock: 0,
+                available_units: [],
             },
         ],
     });
@@ -130,12 +131,32 @@
             return;
         }
 
+        let available_units = [];
+        try {
+            const resPrices = await invoke("get_items_price__by_items_id", { item_id: dataByBarcode.id });
+            available_units = resPrices.data || [];
+        } catch (err) {
+            console.error(err);
+        }
+
+        const hasMainUnit = available_units.some(u => u.type_unit === dataByBarcode.type_unit);
+        if (!hasMainUnit && dataByBarcode.type_unit) {
+            available_units.unshift({
+                barcode: dataByBarcode.barcode,
+                type_unit: dataByBarcode.type_unit,
+                price_buy: dataByBarcode.price_buy || 0,
+                price_sell: dataByBarcode.price_sell,
+                qty: dataByBarcode.qty,
+            });
+        }
+
         result_data.items[index_row].items_id = dataByBarcode.id;
         result_data.items[index_row].items_name = dataByBarcode.name;
         result_data.items[index_row].items_unit = dataByBarcode.type_unit;
         result_data.items[index_row].items_price = dataByBarcode.price_sell;
         result_data.items[index_row].qty = 1;
         result_data.items[index_row].stock = dataByBarcode.qty;
+        result_data.items[index_row].available_units = available_units;
         calculateTotal(index_row);
 
         if (result_data.items.length - 1 === index_row) {
@@ -148,13 +169,14 @@
                 total: null,
                 qty: null,
                 stock: 0,
+                available_units: [],
             });
         }
         dataByBarcode = null;
         tick().then(() => refs[index_row + 1]?.focus());
     }
 
-    function handleItemSelected(item) {
+    async function handleItemSelected(item) {
         if (indexRowSearch !== null) {
             const dupIndex = result_data.items.findIndex(
                 (it) => it.items_id === item.id,
@@ -165,13 +187,33 @@
                 result_data.items[indexRowSearch].code = null;
                 tick().then(() => refs[indexRowSearch]?.focus());
             } else {
+                let available_units = [];
+                try {
+                    const resPrices = await invoke("get_items_price__by_items_id", { item_id: item.id });
+                    available_units = resPrices.data || [];
+                } catch (err) {
+                    console.error(err);
+                }
+
+                const hasMainUnit = available_units.some(u => u.type_unit === item.type_unit);
+                if (!hasMainUnit && item.type_unit) {
+                    available_units.unshift({
+                        barcode: item.barcode,
+                        type_unit: item.type_unit,
+                        price_buy: item.price_buy || 0,
+                        price_sell: item.price_sell,
+                        qty: item.qty_stock || 0,
+                    });
+                }
+
                 result_data.items[indexRowSearch].code = item.barcode;
                 result_data.items[indexRowSearch].items_id = item.id;
                 result_data.items[indexRowSearch].items_name = item.name;
                 result_data.items[indexRowSearch].items_unit = item.type_unit;
                 result_data.items[indexRowSearch].items_price = item.price_sell;
                 result_data.items[indexRowSearch].qty = 1;
-                result_data.items[indexRowSearch].stock = item.qty;
+                result_data.items[indexRowSearch].stock = item.qty_stock || 0;
+                result_data.items[indexRowSearch].available_units = available_units;
                 calculateTotal(indexRowSearch);
                 if (result_data.items.length - 1 === indexRowSearch) {
                     result_data.items.push({
@@ -183,6 +225,7 @@
                         total: null,
                         qty: null,
                         stock: 0,
+                        available_units: [],
                     });
                 }
                 tick().then(() => refs[indexRowSearch + 1]?.focus());
@@ -234,10 +277,26 @@
         return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getFullYear()}`;
     }
 
+    function handleUnitChange(index, selectedUnit) {
+        const item = result_data.items[index];
+        if (!item || !item.available_units) return;
+
+        const selectedPriceRecord = item.available_units.find(
+            (u) => u.type_unit === selectedUnit
+        );
+        if (selectedPriceRecord) {
+            item.items_unit = selectedUnit;
+            item.items_price = selectedPriceRecord.price_sell;
+            item.stock = selectedPriceRecord.qty;
+            item.code = selectedPriceRecord.barcode || item.code;
+            calculateTotal(index);
+        }
+    }
+
     let headers = [
         { name: "Code Barang", value: "code", type: "input-code" },
         { name: "Nama Barang", value: "items_name", type: "text" },
-        { name: "Satuan", value: "items_unit", type: "text" },
+        { name: "Satuan", value: "items_unit", type: "select-unit" },
         { name: "Harga", value: "items_price", type: "parse-number" },
         { name: "QTY", value: "qty", type: "input-number" },
         { name: "Total", value: "total", type: "parse-number" },
@@ -339,6 +398,26 @@
                                                 class="w-full bg-gray-50 border border-transparent focus:border-brand focus:bg-white rounded-lg p-2 font-mono text-sm"
                                                 placeholder="Scan/Ketik..."
                                             />
+                                        {:else if header.type === "select-unit"}
+                                            {#if item.available_units && item.available_units.length > 0}
+                                                <select
+                                                    value={item.items_unit}
+                                                    onchange={(e) => handleUnitChange(i, e.target.value)}
+                                                    class="w-full bg-blue-50 border border-blue-200 text-blue-800 focus:border-brand focus:bg-white rounded-lg p-2 font-bold outline-none cursor-pointer"
+                                                >
+                                                    {#each item.available_units as u}
+                                                        <option value={u.type_unit}>{u.type_unit}</option>
+                                                    {/each}
+                                                </select>
+                                            {:else}
+                                                <select
+                                                    bind:value={item.items_unit}
+                                                    class="w-full bg-gray-50 border border-gray-200 text-gray-400 rounded-lg p-2 font-bold outline-none cursor-not-allowed"
+                                                    disabled
+                                                >
+                                                    <option value={item.items_unit}>{item.items_unit || "-"}</option>
+                                                </select>
+                                            {/if}
                                         {:else if header.type === "input-number"}
                                             <input
                                                 type="number"

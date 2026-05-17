@@ -249,7 +249,7 @@ pub async fn get_detail_by_id__sale_items(id: i32) -> Result<SaleItem, String> {
 pub async fn get_by_sale_id__sale_items(sale_id: i32) -> Result<Vec<SaleItem>, String> {
     let mut qs = QueryBuilderPostgrest::<SaleItem>::new();
     let mut result = qs
-        .select("sale_items.*, items.code")
+        .select("sale_items.*, items.barcode as code")
         .join("LEFT JOIN items ON items.id = sale_items.items_id")
         .where_clause_i32("sale_id", sale_id)
         .find_all()

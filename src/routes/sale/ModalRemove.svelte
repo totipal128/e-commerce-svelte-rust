@@ -8,6 +8,7 @@
     let {
         id = 0,
         title = "",
+        onclose,
     } = $props()
 
     import { showToast } from "$lib/store/toast.js";
@@ -34,11 +35,19 @@
 
     function handlerRemove() {
         remove_data()
-        dispatch("close", "remove");
+        if (onclose) {
+            onclose({ detail: "remove" });
+        } else {
+            dispatch("close", "remove");
+        }
     }
 
     function handlerClose() {
-        dispatch("close");
+        if (onclose) {
+            onclose();
+        } else {
+            dispatch("close");
+        }
     }
 </script>
 

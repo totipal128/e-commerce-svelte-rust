@@ -15,6 +15,9 @@ pub struct User {
     pub address: Option<String>,
     pub no_handphone: Option<String>,
     pub barcode: Option<String>,
+
+    #[sqlx(default)]
+    pub role: Option<String>,
 }
 impl Model for User {
     const TABLE: &'static str = "users";
@@ -36,6 +39,9 @@ pub struct UserNoPass {
     pub address: Option<String>,
     pub no_handphone: Option<String>,
     pub barcode: Option<String>,
+
+    #[sqlx(default)]
+    pub role: Option<String>,
 
     pub created_at: DateTime<Local>,
     pub updated_at: DateTime<Local>,
@@ -64,4 +70,17 @@ pub struct UserFilter {
 
     pub page: Option<i64>,
     pub page_size: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+pub struct LoginRequest {
+    pub username: Option<String>,
+    pub password: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct LoginResponse {
+    pub user: UserNoPass,
+    pub role: String,
+    pub access_token: String,
 }

@@ -11,6 +11,7 @@
     let {
         open = false,
 		id = 0,
+        onclose,
     } = $props()
 
     let width = window.innerWidth;
@@ -43,21 +44,48 @@
                 items_unit: null,
                 items_price: null,
                 total: null,
-                qty: null
+                qty: null,
+                available_units: []
             }
         ],
     });
 
-    async function detail_data() {
+    /**
+     * @param {number} targetId
+     */
+    async function detail_data(targetId) {
         loading = true
         try {
             const result = await invoke("sale_by_id", {
-                id: id
+                id: targetId
             })
 
             console.log(result)
 
 			result_data = result.data
+            if (result_data && result_data.items) {
+                for (let item of result_data.items) {
+                    if (item.items_id) {
+                        try {
+                            const resPrices = await invoke("get_items_price__by_items_id", { item_id: item.items_id });
+                            let available_units = resPrices.data || [];
+                            const hasUnit = available_units.some(u => u.type_unit === item.items_unit);
+                            if (!hasUnit && item.items_unit) {
+                                available_units.unshift({
+                                    barcode: item.code,
+                                    type_unit: item.items_unit,
+                                    price_buy: 0,
+                                    price_sell: item.items_price,
+                                    qty: item.qty || 0,
+                                });
+                            }
+                            item.available_units = available_units;
+                        } catch (err) {
+                            console.error(err);
+                        }
+                    }
+                }
+            }
 
         } catch (err) {
             console.log("err", err)
@@ -67,7 +95,11 @@
 
     }
 
-    onMount(detail_data)
+    $effect(() => {
+        if (id > 0) {
+            detail_data(id);
+        }
+    });
 
     async function getByBarcodeDetail(barcode) {
         loading = true
@@ -86,20 +118,35 @@
 
     }
 
+    function handleUnitChange(index, selectedUnit) {
+        const item = result_data.items[index];
+        if (!item || !item.available_units) return;
+
+        const selectedPriceRecord = item.available_units.find(
+            (u) => u.type_unit === selectedUnit
+        );
+        if (selectedPriceRecord) {
+            item.items_unit = selectedUnit;
+            item.items_price = selectedPriceRecord.price_sell;
+            item.code = selectedPriceRecord.barcode || item.code;
+            
+            // Recalculate row total
+            item.total = parseNumber(item.items_price) * parseNumber(item.qty || 1);
+            
+            // Recalculate global totals
+            result_data.total = result_data.items.reduce((acc, it) => acc + (parseNumber(it.total) || 0), 0);
+            result_data.total_item = result_data.items.reduce((acc, it) => acc + (Number(it.qty) || 0), 0);
+        }
+    }
+
     let headers = [
         {name: 'Code Barang', value: 'code', type: 'input-code'},
         {name: 'Nama Barang', value: 'items_name', type: 'text1'},
-        {name: 'Satuan', value: 'items_unit', type: 'select1'},
+        {name: 'Satuan', value: 'items_unit', type: 'select-unit'},
         {name: 'Harga', value: 'items_price', type: 'parse-number'},
         {name: 'QTY', value: 'qty', type: 'input-number'},
         {name: 'Total', value: 'total', type: 'parse-number'},
     ];
-    let optionSelectItem = [
-        {name: "pcs"},
-        {name: "box"},
-        {name: "gt"},
-        {name: "gt"},
-    ]
     let dateN = new Date();
     // let total = $state(0);
     let index_row = $state(0);
@@ -121,7 +168,11 @@
     }
 
     function close() {
-        dispatch('close');
+        if (onclose) {
+            onclose();
+        } else {
+            dispatch('close');
+        }
     }
 
     async function refresh() {
@@ -130,10 +181,11 @@
                 code: null,
                 items_id: null,
                 items_name: null,
-                items_unit: 0,
+                items_unit: null,
                 items_price: 0,
                 total: 0,
-                qty: 0
+                qty: 0,
+                available_units: []
             }
         ];
         result_data.total = 0
@@ -241,7 +293,8 @@
                 items_unit: null,
                 items_price: null,
                 total: null,
-                qty: null
+                qty: null,
+                available_units: []
             };
 
             return;
@@ -255,7 +308,8 @@
                         items_unit: null,
                         items_price: null,
                         total: null,
-                        qty: null
+                        qty: null,
+                        available_units: []
                     }
                 )
             }
@@ -276,12 +330,32 @@
                 }
                 ;
 
+                let available_units = [];
+                try {
+                    const resPrices = await invoke("get_items_price__by_items_id", { item_id: dataByBarcode.id });
+                    available_units = resPrices.data || [];
+                } catch (err) {
+                    console.error(err);
+                }
+
+                const hasMainUnit = available_units.some(u => u.type_unit === dataByBarcode.type_unit);
+                if (!hasMainUnit && dataByBarcode.type_unit) {
+                    available_units.unshift({
+                        barcode: dataByBarcode.barcode,
+                        type_unit: dataByBarcode.type_unit,
+                        price_buy: dataByBarcode.price_buy || 0,
+                        price_sell: dataByBarcode.price_sell,
+                        qty: dataByBarcode.qty,
+                    });
+                }
+
                 result_data.items[index_row].items_id = dataByBarcode.id;
                 result_data.items[index_row].items_name = dataByBarcode.name;
                 result_data.items[index_row].items_unit = dataByBarcode.type_unit;
                 result_data.items[index_row].items_price = dataByBarcode.price_sell;
                 result_data.items[index_row].qty = 1;
                 result_data.items[index_row].total = parseNumber(dataByBarcode.price_sell) * parseNumber(result_data.items[index_row].qty);
+                result_data.items[index_row].available_units = available_units;
 
                 result_data.total_item += result_data.items[index_row].qty
 
@@ -314,7 +388,7 @@
     })
 </script>
 {#if openModalAdd}
-	<ModalAdd open={openModalAdd} res={result_data}  on:close={handlerCloseModalSave} on:save={refresh}/>
+	<ModalAdd open={openModalAdd} res={result_data}  onclose={handlerCloseModalSave} onsave={refresh}/>
 {/if}
 
 <div class="absolute z-2 h-full w-full bg-gray-300 z-10 top-0 left-0 p-3 overflow-x-auto " tabindex="0" onkeydown={(e)=> savekeydown(e)}>
@@ -425,21 +499,25 @@
 												onkeydown={(e)=> keydown(e, i, hi)}
 												placeholder=""
 										/>
-									{:else if header['type'] === 'select'}
-										<select
-												bind:value={item[header.value]}
-												onchange={(e) => selectUnitItem(e.target.value)}
-												id="small"
-												class="block w-20 px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body mb-4">
-											{#each optionSelectItem as os}
-												<option value="{os.name}" class="p-3">{os.name}</option>
-
-											{/each}
-											<!--												<option selected>Choose a country</option>-->
-											<!--												<option value="CA">Canada</option>-->
-											<!--												<option value="FR">France</option>-->
-											<!--												<option value="DE">Germany</option>-->
-										</select>
+									{:else if header['type'] === 'select-unit'}
+										{#if item.available_units && item.available_units.length > 0}
+											<select
+													bind:value={item.items_unit}
+													onchange={(e) => handleUnitChange(i, e.target.value)}
+													id="small"
+													class="block w-24 px-3 py-2 bg-blue-50 border border-blue-200 text-blue-800 text-sm font-bold rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body cursor-pointer">
+												{#each item.available_units as u}
+													<option value={u.type_unit} class="p-3">{u.type_unit}</option>
+												{/each}
+											</select>
+										{:else}
+											<select
+													bind:value={item.items_unit}
+													class="block w-24 px-3 py-2 bg-gray-50 border border-gray-200 text-gray-400 text-sm font-bold rounded-base outline-none cursor-not-allowed"
+													disabled>
+												<option value={item.items_unit}>{item.items_unit || "-"}</option>
+											</select>
+										{/if}
 									{:else if header['type'] === 'number'}
 										<input
 												bind:value={item[header.value]}

@@ -34,6 +34,8 @@ pub fn run() {
             app::authentication::controller::users::create_users,
             app::authentication::controller::users::update_users,
             app::authentication::controller::users::delete_users,
+            app::authentication::controller::users::login_user,
+            app::authentication::controller::users::reseed_database_users,
             // item
             app::master_data::controller::items::items_get,
             app::master_data::controller::items::get_items_by_id,
@@ -71,6 +73,18 @@ pub fn run() {
             app::master_data::controller::dashboard::dashboard_summary,
             app::master_data::controller::dashboard::dashboard_low_stock,
             app::master_data::controller::dashboard::dashboard_monthly_sales,
+            // unit_barang (satuan barang)
+            app::master_data::controller::unit_barang::unit_barang_list,
+            app::master_data::controller::unit_barang::unit_barang_by_id,
+            app::master_data::controller::unit_barang::unit_barang_create,
+            app::master_data::controller::unit_barang::unit_barang_update,
+            app::master_data::controller::unit_barang::unit_barang_delete,
+            // jenis_barang (kategori barang)
+            app::master_data::controller::jenis_barang::jenis_barang_list,
+            app::master_data::controller::jenis_barang::jenis_barang_by_id,
+            app::master_data::controller::jenis_barang::jenis_barang_create,
+            app::master_data::controller::jenis_barang::jenis_barang_update,
+            app::master_data::controller::jenis_barang::jenis_barang_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

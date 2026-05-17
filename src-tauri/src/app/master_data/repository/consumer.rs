@@ -51,6 +51,7 @@ pub async fn create_consumer(mut data: Consumer) -> Result<Consumer, String> {
             address: data.address.clone(),
             no_handphone: data.no_hp.clone(),
             barcode: None,
+            role: None,
         };
         let created_user = crate::app::authentication::repository::users_repo::create(user_data).await?;
         user_id = created_user.id;
@@ -99,6 +100,7 @@ pub async fn update_consumer(data: Consumer) -> Result<Consumer, String> {
             address: data.address.clone(),
             no_handphone: data.no_hp.clone(),
             barcode: None,
+            role: None,
         };
         // Best effort update, ignore errors if username is skipped logic
         let _ = crate::app::authentication::repository::users_repo::update(user_data).await;

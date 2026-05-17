@@ -61,3 +61,13 @@ async fn items_create() {
         Err(err) => panic!("DB error: {err}"),
     }
 }
+
+#[tokio::test]
+async fn items_get_by_items_id() {
+    let item_id = 9;
+
+    match master_data::repository::items_repo::get_by_items_id(item_id).await {
+        Ok(data) => println!("get_by_items_id results: {:?}", data),
+        Err(err) => panic!("DB error: {err}"),
+    }
+}

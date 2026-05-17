@@ -4,6 +4,8 @@
     import {onMount} from "svelte";
     import {showToast} from "$lib/store/toast.js";
 
+    import { rolesStore } from "$lib/store/role_menus.js";
+
     const dispatch = createEventDispatcher();
 
     let {
@@ -20,7 +22,8 @@
         email: "",
         address: "",
         no_handphone: "",
-        barcode: ""
+        barcode: "",
+        role: "kasir"
     })
 
     async function fetchData() {
@@ -50,7 +53,7 @@
                 data: dataToUpdate
             })
             showToast("Berhasil memperbarui data pengguna", "success");
-            closeModal()
+            closeModal(true)
         } catch (err) {
             console.log("err", err)
             showToast("Gagal memperbarui pengguna: " + err, "error");
@@ -61,6 +64,9 @@
 
     onMount(fetchData)
 
+    /**
+     * @param {any} confirm
+     */
     function closeModal(confirm) {
         let c = false
         if (typeof (confirm) !== "boolean") {
@@ -69,6 +75,9 @@
         dispatch('close', {confirm: c});
     }
 
+    /**
+     * @param {any} e
+     */
     function save(e) {
         updateData()
     }
@@ -114,10 +123,18 @@
                                 <label class="block mb-2 text-sm font-medium text-heading">No Handphone</label>
                                 <input bind:value={usersData.no_handphone} type="text" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs"/>
                             </div>
-                            <div class="col-span-2 md:col-span-1">
-                                <label class="block mb-2 text-sm font-medium text-heading">Barcode</label>
-                                <input bind:value={usersData.barcode} type="text" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs"/>
-                            </div>
+                             <div class="col-span-2 md:col-span-1">
+                                 <label class="block mb-2 text-sm font-medium text-heading">Barcode</label>
+                                 <input bind:value={usersData.barcode} type="text" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs"/>
+                             </div>
+                             <div class="col-span-2 md:col-span-1">
+                                 <label class="block mb-2 text-sm font-medium text-heading">Peran Kerja (Role)</label>
+                                 <select bind:value={usersData.role} class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3.5 py-3 shadow-xs font-semibold focus:outline-none">
+                                     {#each $rolesStore as role}
+                                         <option value={role.code}>{role.name} ({role.code})</option>
+                                     {/each}
+                                 </select>
+                             </div>
                             <div class="col-span-2">
                                 <label class="block mb-2 text-sm font-medium text-heading">Alamat</label>
                                 <textarea bind:value={usersData.address} rows="2" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs"></textarea>

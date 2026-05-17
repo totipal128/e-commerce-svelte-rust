@@ -125,8 +125,8 @@
                                     <td class="p-4"><span class="px-2 py-1 bg-gray-100 rounded text-xs uppercase">{item.type_unit}</span></td>
                                     <td class="p-4 text-right font-bold text-brand">{formatCurrency(item.price_sell)}</td>
                                     <td class="p-4 text-right">
-                                        <span class={item.qty > 0 ? 'text-green-600' : 'text-red-500'}>
-                                            {item.qty}
+                                        <span class={(item.qty_stock || 0) > 0 ? 'text-green-600' : 'text-red-500'}>
+                                            {item.qty_stock || 0}
                                         </span>
                                     </td>
                                 </tr>

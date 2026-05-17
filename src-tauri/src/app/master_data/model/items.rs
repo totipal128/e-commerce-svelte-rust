@@ -9,7 +9,8 @@ pub struct ItemsList {
     pub barcode: Option<String>,
     pub name: Option<String>,
     pub type_unit: Option<String>,
-    pub items_category_id: Option<i32>,
+    pub jenis_barang_id: Option<i32>,
+    pub jenis_barang_name: Option<String>,
     pub qty_stock: Option<i32>,
     pub price_buy: Option<f64>,
     pub price_sell: Option<f64>,
@@ -26,7 +27,7 @@ pub struct Items {
     pub barcode: Option<String>,
     pub name: Option<String>,
     pub type_unit: Option<String>,
-    pub items_category_id: Option<i32>,
+    pub jenis_barang_id: Option<i32>,
     pub qty_stock: Option<i32>,
     pub created_by_id: Option<i32>,
     pub created_at: Option<DateTime<Local>>,
@@ -36,7 +37,7 @@ impl Model for Items {
     const FIELDS_INSERT: &'static [&'static str] = &[
         stringify!(barcode),
         stringify!(name),
-        stringify!(items_category_id),
+        stringify!(jenis_barang_id),
         stringify!(type_unit),
         stringify!(qty_stock),
     ];
@@ -59,7 +60,7 @@ pub struct ItemsDetail {
     pub barcode: Option<String>,
     pub name: Option<String>,
     pub type_unit: Option<String>,
-    pub items_category_id: Option<i32>,
+    pub jenis_barang_id: Option<i32>,
     pub qty_stock: Option<i32>,
     pub created_by_id: Option<i32>,
     pub created_at: Option<DateTime<Utc>>,
@@ -72,7 +73,7 @@ impl Model for ItemsDetail {
     const FIELDS_INSERT: &'static [&'static str] = &[
         stringify!(barcode),
         stringify!(name),
-        stringify!(items_category_id),
+        stringify!(jenis_barang_id),
         stringify!(type_unit),
         stringify!(qty_stock),
     ];
@@ -84,7 +85,7 @@ pub struct ItemsCreate {
     pub barcode: Option<String>,
     pub name: Option<String>,
     pub type_unit: Option<String>,
-    pub items_category_id: Option<i32>,
+    pub jenis_barang_id: Option<i32>,
     pub qty_stock: Option<i32>,
     pub price: Option<Vec<ItemPrice>>,
 }

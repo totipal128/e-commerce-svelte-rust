@@ -12,8 +12,8 @@ pub struct ApiResponse<T> {
 }
 
 #[tauri::command]
-pub async fn dashboard_summary() -> Result<ApiResponse<DashboardSummary>, String> {
-    match get_dashboard_summary().await {
+pub async fn dashboard_summary(user_id: Option<i32>) -> Result<ApiResponse<DashboardSummary>, String> {
+    match get_dashboard_summary(user_id).await {
         Ok(data) => Ok(ApiResponse { success: true, data: Some(data), message: "OK".into() }),
         Err(e) => Ok(ApiResponse { success: false, data: None, message: e }),
     }
@@ -28,8 +28,8 @@ pub async fn dashboard_low_stock() -> Result<ApiResponse<Vec<LowStockItem>>, Str
 }
 
 #[tauri::command]
-pub async fn dashboard_monthly_sales(months: i32) -> Result<ApiResponse<Vec<MonthlySale>>, String> {
-    match get_monthly_sales(months).await {
+pub async fn dashboard_monthly_sales(months: i32, user_id: Option<i32>) -> Result<ApiResponse<Vec<MonthlySale>>, String> {
+    match get_monthly_sales(months, user_id).await {
         Ok(data) => Ok(ApiResponse { success: true, data: Some(data), message: "OK".into() }),
         Err(e) => Ok(ApiResponse { success: false, data: None, message: e }),
     }

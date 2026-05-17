@@ -1,6 +1,6 @@
 <script>
-    import { formatCurrencyIDR } from '$lib/helpers/parse_number_format_currency.ts';
-    import { FormatDate } from '$lib/helpers/formated_date.ts';
+    import { formatCurrencyIDR } from '$lib/helpers/parse_number_format_currency';
+    import { FormatDate } from '$lib/helpers/formated_date';
 
     let { data = {} } = $props();
 
@@ -94,14 +94,26 @@
             margin: 0;
         }
         :global(body) {
-            margin: 0;
-            padding: 0;
-            background: white;
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        :global(body *) {
+            visibility: hidden !important;
+        }
+        .receipt-container, .receipt-container * {
+            visibility: visible !important;
         }
         .receipt-container {
-            width: 72mm;
-            padding: 4mm;
-            font-size: 11px;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 72mm !important;
+            padding: 4mm !important;
+            margin: 0 !important;
+            display: block !important;
+            background: white !important;
+            color: black !important;
         }
     }
 </style>

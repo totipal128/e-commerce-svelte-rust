@@ -102,7 +102,7 @@
 
 							<td class="px-6 py-4">
 								<button
-										onclick="{(e) => handleDetail(item.id)}"
+										onclick={(e) => handleDetail(item.id)}
 										type="button"
 										class="text-white  hover:bg-gray-500 px-3 py-2.5 rounded-base shadow-xl">
 									<svg
@@ -115,7 +115,7 @@
 								</button>
 
 								<button
-										onclick="{(e) => handleUpdate(item.id)}"
+										onclick={(e) => handleUpdate(item.id)}
 										type="button"
 										class="text-white  hover:bg-gray-500 px-3 py-2.5 rounded-base shadow-xl">
 
@@ -131,7 +131,7 @@
 								</button>
 
 								<button
-										onclick="{(e) => handleRemove(item.id)}" type="button"
+										onclick={(e) => handleRemove(item.id)} type="button"
 										class="text-white  hover:bg-gray-500 px-3 py-2.5 rounded-base shadow-xl">
 
 									<svg

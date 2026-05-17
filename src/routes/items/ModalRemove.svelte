@@ -1,122 +1,126 @@
 <script>
-    import {createEventDispatcher} from 'svelte';
+  import { createEventDispatcher } from "svelte";
 
-    const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher();
 
-    import {invoke} from "@tauri-apps/api/core";
-    import {onMount} from "svelte";
+  import { invoke } from "@tauri-apps/api/core";
+  import { onMount } from "svelte";
 
-    let {
-        openRemove = false,
-        id = 0
-    } = $props();
+  let { openRemove = false, id = 0 } = $props();
 
-    let loading = $state(true)
-    let data = $state([])
+  let loading = $state(true);
+  let data = $state([]);
 
-    async function fetchData() {
-        loading = true
-        try {
-            const result = await invoke("get_items_by_id", {
-                id: id
-            })
+  async function fetchData() {
+    loading = true;
+    try {
+      const result = await invoke("get_items_by_id", {
+        id: id,
+      });
 
-            data = result.data
-        } catch (err) {
-            console.log("err", err)
-        } finally {
-            loading = false;
-        }
+      data = result.data;
+    } catch (err) {
+      console.log("err", err);
+    } finally {
+      loading = false;
+    }
+  }
 
+  async function deleteData() {
+    loading = true;
+    try {
+      const result = await invoke("items_delete", {
+        id: id,
+      });
+
+      data = result.data;
+
+      console.log(result);
+    } catch (err) {
+      console.log("err", err);
+    } finally {
+      loading = false;
+
+      closeModal(true);
+    }
+  }
+
+  onMount(fetchData);
+
+  function closeModal(confirm) {
+    let c = false;
+    if (typeof confirm !== "boolean") {
+      c = true;
     }
 
-    async function deleteData() {
-        loading = true
-        try {
-            const result = await invoke("items_delete", {
-                id: id
-            })
+    dispatch("close", { confirm: c });
+  }
 
-            data = result.data
-
-            console.log(result)
-        } catch (err) {
-            console.log("err", err)
-        } finally {
-            loading = false;
-
-            closeModal(true)
-        }
-
-    }
-
-    onMount(fetchData)
-
-
-    function closeModal(confirm) {
-        let c = false
-        if (typeof (confirm) !== "boolean") {
-            c = true
-        }
-
-        dispatch('close', {confirm: c});
-    }
-
-    async function confirmModal() {
-        await deleteData()
-    }
-
+  async function confirmModal() {
+    await deleteData();
+  }
 </script>
 
 {#if openRemove}
-	<!-- Overlay -->
-	<div
-			class="fixed inset-0 z-50 flex items-center justify-center
-           bg-black" style="opacity: 0.9"
-			on:click={closeModal}
-	>
-		<!-- ModalCreate -->
-		<div
-				class="relative bg-neutral-primary-soft border border-default
-             rounded-base shadow-sm p-4 md:p-6 w-full max-w-md"
-				on:click|stopPropagation
-		>
-			<!-- Close button -->
-			<button
-					on:click={closeModal}
-					class="absolute top-3 right-3 text-body
-               hover:bg-neutral-tertiary rounded-base
-               w-9 h-9 flex items-center justify-center">
-				✕
-			</button>
+  <!-- Overlay -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center
+           bg-black"
+    style="opacity: 0.9"
+    on:click={closeModal}
+  ></div>
+  <!-- ModalCreate -->
+  <div
+    class="absolute z-51 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+           bg-neutral-primary-soft border border-default
+            rounded-base shadow-sm p-4 md:p-6 w-full max-w-md"
+    on:click|stopPropagation
+  >
+    <!-- Close button -->
+    <button
+      on:click={closeModal}
+      class="absolute top-3 right-3 text-body
+            hover:bg-neutral-tertiary rounded-base
+            w-9 h-9 flex items-center justify-center"
+    >
+      ✕
+    </button>
 
-			<!-- Content -->
-			<div class="text-center">
-				<svg class="mx-auto mb-4 text-fg-disabled w-12 h-12" viewBox="0 0 24 24" fill="none">
-					<path stroke="currentColor" stroke-width="2"
-						  d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0Z"/>
-				</svg>
+    <!-- Content -->
+    <div class="text-center">
+      <svg
+        class="mx-auto mb-4 text-fg-disabled w-12 h-12"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <path
+          stroke="currentColor"
+          stroke-width="2"
+          d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0Z"
+        />
+      </svg>
 
-				<h3 class="mb-6 text-body">
-					Apakah Anda Yakin Ingin Menghapus Data Barang {data.name} ?
-				</h3>
+      <h3 class="mb-6 text-body">
+        Apakah Anda Yakin Ingin Menghapus Data Barang {data.name} ?
+      </h3>
 
-				<div class="flex gap-4 justify-center">
-					<button
-							on:click={confirmModal}
-							class="bg-danger hover:bg-danger-strong text-white px-4 py-2.5 rounded-base">
-						Ya
-					</button>
+      <div class="flex gap-4 justify-center">
+        <button
+          on:click={confirmModal}
+          class="bg-danger hover:bg-danger-strong text-white px-4 py-2.5 rounded-base"
+        >
+          Ya
+        </button>
 
-					<button
-							on:click={closeModal}
-							class="bg-neutral-secondary-medium
-                   hover:bg-neutral-tertiary-medium
-                   px-4 py-2.5 rounded-base">
-						Tidak
-					</button>
-				</div>
-			</div>
-		</div>
-	</div>
+        <button
+          on:click={closeModal}
+          class="bg-neutral-secondary-medium
+                hover:bg-neutral-tertiary-medium
+                px-4 py-2.5 rounded-base"
+        >
+          Tidak
+        </button>
+      </div>
+    </div>
+  </div>
 {/if}
